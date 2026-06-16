@@ -110,6 +110,9 @@
   .gen .warn{color:var(--warn);font-weight:700}
   .gen .urgent{color:var(--danger);font-weight:800}
   .gen .ok{color:var(--ok);font-weight:700}
+  .gsub .warn{color:var(--warn);font-weight:700}
+  .gsub .urgent{color:var(--danger);font-weight:800}
+  .gsub .ok{color:var(--ok);font-weight:700}
   .tform label{display:block;font-size:12.5px;color:var(--muted);margin:11px 0 4px;font-weight:600}
   .tform input[type=text],.tform input[type=number],.tform select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13.5px;color:var(--ink)}
   .tform .modes{display:flex;gap:8px}
@@ -119,6 +122,15 @@
   .tform .row2>div{flex:1}
   .tcheck{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:13.5px}
   .tcheck input{flex:none}
+  /* 2단 모델: 성분 그룹 / 상품 행 */
+  tr.gen-head>td{background:#f6f8fc}
+  tr.gen-head .name{font-weight:800}
+  tr.brand>td:first-child{padding-left:26px}
+  tr.brand .bname{font-weight:700}
+  tr.brand .bmaker{color:var(--muted);font-weight:500;font-size:11.5px;margin-left:3px}
+  .gsub{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:1px}
+  .alloc-chip{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;background:var(--brand-soft);color:var(--brand-dk);white-space:nowrap}
+  .alloc-chip.warn{background:var(--warn-soft);color:var(--warn)}
   /* 재고·유효기간 */
   .invsum{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
   .invsum .cell{background:#fff;padding:13px 14px}
@@ -234,7 +246,7 @@
 <!-- ============ SCREEN 2 : 주문 제안 ============ -->
 <section id="s2" class="screen on">
   <h1>주문 제안</h1>
-  <div class="sub">경희채움정신과 · 기준일 2026-06-15 (월) · AI 에이전트가 안전재고 공식으로 발주량을 제안했습니다.</div>
+  <div class="sub">경희채움정신과 · 기준일 2026-06-15 (월) · AI 에이전트가 안전재고 공식으로 발주량을 제안했습니다. <b>수요·발주는 성분(generic) 기준 합산</b>, 재고·유효기간은 상품·lot 기준입니다.</div>
 
   <div class="summary">
     <div class="cell"><div class="k">기준일</div><div class="v">06/15<small>월</small></div></div>
@@ -261,7 +273,7 @@
     <table>
       <thead>
         <tr>
-          <th class="l">약품명</th>
+          <th class="l">성분 · 상품</th>
           <th>현재고</th>
           <th>안전재고 <span style="color:var(--brand)">✎</span></th>
           <th>일평균</th>
@@ -284,7 +296,7 @@
         <button class="btn primary sm" onclick="addReservation()">추가</button>
         <button class="btn ghost sm" onclick="toggleAddForm(false)">취소</button>
       </div>
-      <div class="addhint">AI 제안은 <b>과거 사용량</b> 기반입니다. 발주 권한자(약국장 등)가 <b>예측한 추가 수요</b>는 여기서 직접 넣으세요.</div>
+      <div class="addhint">AI 제안은 <b>과거 사용량</b> 기반입니다. 발주 권한자(약국장 등)가 <b>예측한 추가 수요</b>는 여기서 직접 넣으세요. 같은 성분에 제조사가 둘 이상이면(듀얼코드) 발주량은 상품별로 <b>배분</b>됩니다.</div>
     </div>
 
     <div class="bar">
@@ -395,7 +407,7 @@
 <!-- ============ SCREEN 5 : 재고·유효기간 ============ -->
 <section id="s5" class="screen">
   <h1>재고 · 유효기간 관리</h1>
-  <div class="sub">경희채움정신과 · 기준일 2026-06-15 · 이지스(사용) + 신성아트컴(입고·유효기간) 자동 집계 · 완통/개봉은 반품·폐기 판단 시에만 실사</div>
+  <div class="sub">경희채움정신과 · 기준일 2026-06-15 · 이지스(사용) + 신성아트컴(입고·유효기간) 자동 집계 · 재고·lot·유효기간은 <b>상품(브랜드)·lot 단위</b>로 분리 관리 · 완통/개봉은 반품·폐기 판단 시에만 실사</div>
 
   <div class="invsum" id="invSum"></div>
 
@@ -403,7 +415,7 @@
     <table>
       <thead>
         <tr>
-          <th class="l">약품명</th>
+          <th class="l">상품 · 성분</th>
           <th>현재고</th>
           <th class="l">lot</th>
           <th class="l">유효기간</th>
@@ -416,7 +428,8 @@
       <tbody id="invRows"></tbody>
     </table>
     <div class="addhint" style="border-top:1px dashed var(--line);padding-top:12px;margin-top:6px">
-      ※ 완통/개봉 수량은 평소 추적하지 않고 <b>반품·폐기를 판단할 때만 실사 입력</b>합니다(길①). FEFO '이 통부터' 지정은 이지스가 수행하므로 중복하지 않습니다. 향정 유효 경과분은 완통/개봉 불문 보건소 폐기 대상입니다.
+      ※ 재고·lot·유효기간은 <b>상품(브랜드)·lot 단위로 분리</b>합니다(같은 성분도 브랜드별 별도 행 — 예: 아리피프라졸 = 아빌리파이 + 아라빌). 발주 수요는 ① 화면에서 성분 기준으로 합산합니다.
+      완통/개봉 수량은 평소 추적하지 않고 <b>반품·폐기를 판단할 때만 실사 입력</b>합니다(길①). FEFO '이 통부터' 지정은 이지스가 수행하므로 중복하지 않습니다. 향정 유효 경과분은 완통/개봉 불문 보건소 폐기 대상입니다.
     </div>
   </div>
 </section>
@@ -432,7 +445,7 @@
     <div class="row"><span>발주 품목</span><b id="mKinds">9 종</b></div>
     <div class="row"><span>총 수량</span><b id="mQty">820 정</b></div>
     <div class="row"><span>예상 금액</span><b id="mAmt">₩1,861,400</b></div>
-    <div class="row"><span>향정 포함</span><b>4 종 (별도 관리대장 기록)</b></div>
+    <div class="row"><span>향정 포함</span><b id="mPsy">4 종 (별도 관리대장 기록)</b></div>
     <div class="acts">
       <button class="btn ghost" onclick="closeConfirm()">취소</button>
       <button class="btn primary" onclick="approve()">승인하고 전송</button>
@@ -446,7 +459,7 @@
     <h3>제조사 전환 · 듀얼코드 설정</h3>
     <p>같은 성분·규격을 다른 제조사 제품으로 전환하거나, 두 제조사를 상시 병행 관리합니다. 청구코드는 별도(듀얼코드)로 관리됩니다.</p>
     <div class="tform">
-      <label>대상 품목 (구제품)</label>
+      <label>대상 성분 (구제품)</label>
       <select id="tTarget" onchange="syncTransDefaults()"></select>
       <label>모드</label>
       <div class="modes">
@@ -495,125 +508,199 @@
   opacity:0;transition:.25s;z-index:200;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.25)"></div>
 
 <script>
-// ---------- mock data (경희채움정신과) ----------
-// 향정=향정신성의약품, vol=변동큼(σ>평균30%)
-const MASTER = [
-  {name:"알프라졸람정 0.25mg", gen:"자낙스 · 디오피정", psy:true,  vol:true,  stock:140, safety:120, avg:42, lead:2, unit:35},
-  {name:"클로나제팜정 0.5mg",  gen:"리보트릴",        psy:true,  vol:false, stock:90,  safety:80,  avg:26, lead:2, unit:48},
-  {name:"졸피뎀정 10mg",       gen:"스틸녹스CR",      psy:true,  vol:true,  stock:60,  safety:150, avg:55, lead:2, unit:190, ai:18},
-  {name:"로라제팜정 1mg",      gen:"아티반",          psy:true,  vol:false, stock:110, safety:90,  avg:30, lead:2, unit:42},
-  {name:"에스시탈로프람정 10mg",gen:"렉사프로",        psy:false, vol:false, stock:200, safety:160, avg:48, lead:2, unit:260},
-  {name:"설트랄린정 50mg",     gen:"졸로푸트",        psy:false, vol:false, stock:170, safety:140, avg:40, lead:2, unit:230},
-  {name:"쿠에티아핀정 25mg",   gen:"쎄로켈",          psy:false, vol:false, stock:130, safety:110, avg:36, lead:2, unit:155},
-  {name:"아리피프라졸정 10mg", gen:"아빌리파이",      psy:false, vol:false, stock:80,  safety:70,  avg:22, lead:2, unit:520},
-  {name:"멜라토닌서방정 2mg",  gen:"서카딘",          psy:false, vol:true,  stock:50,  safety:95,  avg:33, lead:2, unit:410},
-];
-// 안전재고 수정 흔적을 남기려 safety0(원래값) 보존. 작업본 DRUGS는 추가/수정 자유.
-const DRUGS = MASTER.map(d=>({...d, safety0:d.safety}));
+// ========================================================================
+//  2단 모델
+//  · 성분(generic) 레벨 = 수요·ROP·안전재고·발주 제안   (브랜드 무관 합산)
+//  · 상품(product)·lot 레벨 = 재고·유효기간·반품·NIMS    (브랜드·lot 특정)
+//  듀얼코드/제조사 전환 = "한 성분 라인에 상품 2개"인 상태.
+// ========================================================================
 const won = n => "₩"+n.toLocaleString("ko-KR");
-const ceilPack = n => Math.max(0, Math.ceil(n/10)*10); // 10정 포장 가정
+const ceilPack = n => Math.max(0, Math.ceil(n/10)*10);   // 10정 포장 가정
+const BASE = new Date(2026,5,15);                        // 기준일 2026-06-15
+const addDays = (dt,n)=>{ const x=new Date(dt); x.setDate(x.getDate()+n); return x; };
+const fmtMD = dt=>(dt.getMonth()+1)+"/"+dt.getDate();
+
+// psy=향정신성의약품, vol=변동큼(σ>평균30%). avg=성분 일평균 수요(단일 진실원).
+// products[].share = 발주 배분 가중치(브랜드별 최근 사용량) · stock = 브랜드 현재고.
+const GENERICS = [
+  {id:"alpz", gen:"알프라졸람정 0.25mg",  psy:true,  vol:true,  lead:2, safety:120, avg:42, ai:0,
+   products:[{brand:"디오피정", maker:"환인", stock:140, share:42, unit:35}]},
+  {id:"clzp", gen:"클로나제팜정 0.5mg",   psy:true,  vol:false, lead:2, safety:80,  avg:26, ai:0,
+   products:[{brand:"리보트릴", maker:"로슈", stock:90, share:26, unit:48}]},
+  {id:"zolp", gen:"졸피뎀정 10mg",        psy:true,  vol:true,  lead:2, safety:150, avg:55, ai:18,
+   products:[{brand:"스틸녹스CR", maker:"한독", stock:60, share:55, unit:190}]},
+  {id:"lora", gen:"로라제팜정 1mg",       psy:true,  vol:false, lead:2, safety:90,  avg:30, ai:0,
+   products:[{brand:"아티반", maker:"일동", stock:110, share:30, unit:42}]},
+  {id:"esci", gen:"에스시탈로프람정 10mg", psy:false, vol:false, lead:2, safety:160, avg:48, ai:0,
+   products:[{brand:"렉사프로", maker:"룬드벡", stock:200, share:48, unit:260}]},
+  {id:"sert", gen:"설트랄린정 50mg",      psy:false, vol:false, lead:2, safety:140, avg:40, ai:0,
+   products:[{brand:"졸로푸트", maker:"화이자", stock:170, share:40, unit:230}]},
+  {id:"quet", gen:"쿠에티아핀정 25mg",    psy:false, vol:false, lead:2, safety:110, avg:36, ai:0,
+   products:[{brand:"쎄로켈", maker:"아스트라제네카", stock:130, share:36, unit:155}]},
+  {id:"arip", gen:"아리피프라졸정 10mg",  psy:false, vol:false, lead:2, safety:70,  avg:22, ai:0,
+   products:[
+     {brand:"아빌리파이", maker:"오츠카",     stock:50, share:14, unit:520},
+     {brand:"아라빌",     maker:"유나이티드", stock:30, share:8,  unit:330},
+   ]},
+  {id:"mela", gen:"멜라토닌서방정 2mg",   psy:false, vol:true,  lead:2, safety:95,  avg:33, ai:0,
+   products:[{brand:"서카딘", maker:"건일", stock:50, share:33, unit:410}]},
+];
+GENERICS.forEach(g=>{ g.safety0=g.safety; g.products.forEach(p=>p.genId=g.id); });
+const EXTRA = [];                                        // 추가 발주 직접 입력분
+
+// ---------- 성분 레벨 수요 계산 + 상품 레벨 수요배분 ----------
+function aggregate(g){
+  g._stock = g.products.reduce((s,p)=>s+p.stock,0);      // 현재고 = 모든 상품 합산
+  g._avg   = g.avg;                                      // 일평균 = 성분 수요
+  g._rop   = g._avg*g.lead + g.safety;
+  g._need  = ceilPack(g._rop - g._stock + (g.ai||0));    // 성분 제안 발주량
+}
+function allocate(g, reset){                             // 발주 가능 상품에 share 비율로 배분
+  const active = g.products.filter(p=>!p.suspended);
+  g.products.forEach(p=>{ if(p.suspended){ p._alloc=0; p._qty=0; } });
+  const base = active.reduce((s,p)=>s+(p.share||0),0);
+  let assigned=0;
+  active.forEach((p,k)=>{
+    let a;
+    if(active.length===1) a=g._need;
+    else if(base>0) a = (k<active.length-1) ? ceilPack(g._need*(p.share||0)/base) : Math.max(0,g._need-assigned);
+    else a = (k===0)?g._need:0;
+    if(k<active.length-1) assigned+=a;
+    p._alloc=a;
+    if(reset || !('_qty' in p)) p._qty=a;
+  });
+}
+function computeAll(reset){ GENERICS.forEach(g=>{ aggregate(g); allocate(g,reset); }); }
 
 // ---------- Screen 2 render ----------
 const rowsEl = document.getElementById("rows");
+let FLAT=[];                                             // qty 입력 매핑용 상품 평면 목록
+function badgesFor(g){ return (g.psy?'<span class="b psy">향정</span>':'')+(g.vol?'<span class="b vol">변동큼</span>':''); }
 
-function computeRow(d){                            // ROP 공식 + AI 조정 → 제안발주량
-  if(d.added){ d._rop=null; return; }              // 직접추가 행은 계산 없음
-  d._rop = d.avg*d.lead + d.safety;
-  if(d.transition){ d._propose=0; return; }        // 전환 구제품: 발주 중단(잔여 소진)
-  d._propose = ceilPack(d._rop - d.stock + (d.ai||0));
-}
-function rowHTML(d,i){
-  let badges = (d.psy?'<span class="b psy">향정</span>':'')
-             + (d.vol?'<span class="b vol">변동큼</span>':'')
-             + (d.added?'<span class="b rsv">추가</span>':'');
-  if(d.added){
-    return `<td class="l"><span class="name">${d.name}${badges}<span class="gen">권한자 직접 추가${d.memo?' · '+d.memo:''}</span></span></td>
-      <td>—</td><td>—</td><td>—</td><td class="rop">—</td><td class="propose"><b>—</b></td>
-      <td><input class="qty" type="number" min="0" step="10" value="${d._qty}" data-i="${i}"></td>
-      <td class="l"><button class="rm" data-i="${i}">✕ 삭제</button></td>`;
-  }
-  // 제조사 전환·듀얼코드 배지 + 안내문구
-  let gen = d.gen||'';
-  if(d.transition){
-    badges += '<span class="b tro">전환·구</span>';
-    gen = `발주 중단 · 잔여 ${d.stock}정, 예상 소진 ${fmtMD(d.transition.soldOut)} (소진 전 신제품 준비 필요)`;
-  } else if(d.dual){
-    badges += '<span class="b dual">듀얼코드</span>';
-  } else if(d.transNew){
-    badges += d.mode==='switch' ? '<span class="b trn">전환·신</span>' : '<span class="b trn">듀얼·신</span>';
-    const parts=[`${d.lineFrom} ${d.mode==='switch'?'대체':'병행'}`];
-    if(d.mode==='switch'){
-      parts.push(d.dueOrder<BASE ? '<span class="urgent">🔴 발주 마감 경과 — 즉시 발주</span>'
-                                 : `신제품 발주 마감 ${fmtMD(d.dueOrder)}`);
-    }
-    if(d.canReq) parts.push(d.canReady
-      ? '<span class="ok">캐니스터 ✔ 준비완료</span>'
-      : `<span class="warn">캐니스터 ⚠ 미준비 — 소진(${fmtMD(d.soldOut||BASE)}) 전 준비 안 되면 연속 처방 중단 위험</span>`);
-    gen = parts.join(' · ');
-  }
-  const cust = (!d.transNew && d.safety!==d.safety0) ? ' custom' : '';
-  return `<td class="l"><span class="name">${d.name}${badges}<span class="gen">${gen}</span></span></td>
-    <td>${d.stock}</td>
-    <td><input class="safety${cust}" type="number" min="0" step="10" value="${d.safety}" data-i="${i}"></td>
-    <td>${d.avg}<small style="color:var(--muted)">/일</small></td>
-    <td class="rop">${d._rop}</td>
-    <td class="propose"><b>${d._propose}</b></td>
-    <td><input class="qty" type="number" min="0" step="10" value="${d._qty}" data-i="${i}"></td>
-    <td class="l"><input class="memo" placeholder="메모" ${d.psy?'value="향정 대장"':''}></td>`;
-}
 function renderRows(){
   rowsEl.innerHTML="";
-  DRUGS.forEach((d,i)=>{
-    computeRow(d);
-    if(!('_qty' in d)) d._qty=d._propose;          // 최초엔 제안값으로 채움
-    const tr=document.createElement("tr");
-    if(d.added) tr.classList.add("added");
-    if(d.transition||d.dual) tr.classList.add("trans-old");
-    if(d.transNew) tr.classList.add("trans-new");
-    if(d.transNew && d.canReq && !d.canReady) tr.classList.add("cana-warn");
-    tr.innerHTML=rowHTML(d,i);
+  FLAT=[]; GENERICS.forEach(g=>g.products.forEach(p=>FLAT.push(p)));
+  GENERICS.forEach(g=>{
+    aggregate(g); allocate(g);
+    const multi = g.products.length>1;
+    const cust = (g.safety!==g.safety0) ? ' custom' : '';
+    if(!multi){
+      const p=g.products[0], idx=FLAT.indexOf(p);
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td class="l"><span class="name">${g.gen}${badgesFor(g)}<span class="gsub">${p.brand} · ${p.maker}</span></span></td>
+        <td>${g._stock}</td>
+        <td><input class="safety${cust}" type="number" min="0" step="10" value="${g.safety}" data-gid="${g.id}"></td>
+        <td>${g._avg}<small style="color:var(--muted)">/일</small></td>
+        <td class="rop">${g._rop}</td>
+        <td class="propose"><b>${g._need}</b></td>
+        <td><input class="qty" type="number" min="0" step="10" value="${p._qty}" data-pid="${idx}"></td>
+        <td class="l"><input class="memo" placeholder="메모" ${g.psy?'value="향정 대장"':''}></td>`;
+      rowsEl.appendChild(tr);
+    } else {
+      // 성분 parent (수요·발주 합산)
+      const head=document.createElement("tr"); head.className="gen-head";
+      head.innerHTML=`
+        <td class="l"><span class="name">${g.gen}${badgesFor(g)}<span class="gsub">성분 합산 · 상품 ${g.products.length}종(듀얼코드/전환)</span></span></td>
+        <td>${g._stock}</td>
+        <td><input class="safety${cust}" type="number" min="0" step="10" value="${g.safety}" data-gid="${g.id}"></td>
+        <td>${g._avg}<small style="color:var(--muted)">/일</small></td>
+        <td class="rop">${g._rop}</td>
+        <td class="propose"><b>${g._need}</b></td>
+        <td><span class="alloc-chip" data-allocgid="${g.id}"></span></td>
+        <td class="l"><span class="gsub" style="margin:0">↓ 상품별 배분</span></td>`;
+      rowsEl.appendChild(head);
+      g.products.forEach(p=>{
+        const idx=FLAT.indexOf(p);
+        const tr=document.createElement("tr");
+        tr.className="brand"+(p.suspended?" trans-old":"")+(p.transNew?" trans-new":"")+(p.canReq&&!p.canReady?" cana-warn":"");
+        let badge = p.transNew ? '<span class="b trn">신규</span>' : (p.suspended ? '<span class="b tro">전환·구</span>' : '<span class="b dual">듀얼</span>');
+        let sub = p.suspended ? `발주 중단 · 잔여 ${p.stock}정 소진 후 종료` : (p.note || '병행 발주');
+        tr.innerHTML=`
+          <td class="l"><span class="name"><span class="bname">${p.brand}</span><span class="bmaker">${p.maker||''}</span>${badge}<span class="gsub">${sub}</span></span></td>
+          <td>${p.stock}</td>
+          <td style="color:var(--muted)">·</td>
+          <td style="color:var(--muted)">${p.share}<small>/일</small></td>
+          <td class="rop" style="color:var(--muted)">·</td>
+          <td class="propose" style="color:var(--muted)">${p.suspended?'중단':'<b>'+p._alloc+'</b>'}</td>
+          <td>${p.suspended?'<span style="color:var(--muted)">—</span>':`<input class="qty" type="number" min="0" step="10" value="${p._qty}" data-pid="${idx}">`}</td>
+          <td class="l"><input class="memo" placeholder="메모" ${g.psy?'value="향정 대장"':''}></td>`;
+        rowsEl.appendChild(tr);
+      });
+    }
+  });
+  // 추가 발주 직접 입력분
+  EXTRA.forEach((e,k)=>{
+    const tr=document.createElement("tr"); tr.className="added";
+    tr.innerHTML=`<td class="l"><span class="name">${e.name}${e.psy?'<span class="b psy">향정</span>':''}<span class="b rsv">추가</span><span class="gsub">권한자 직접 추가${e.memo?' · '+e.memo:''}</span></span></td>
+      <td>—</td><td>—</td><td>—</td><td class="rop">—</td><td class="propose"><b>—</b></td>
+      <td><input class="qty" type="number" min="0" step="10" value="${e._qty}" data-eid="${k}"></td>
+      <td class="l"><button class="rm" data-eid="${k}">✕ 삭제</button></td>`;
     rowsEl.appendChild(tr);
+  });
+  updateAllocChips();
+}
+function updateAllocChips(){
+  document.querySelectorAll("[data-allocgid]").forEach(chip=>{
+    const g=GENERICS.find(x=>x.id===chip.dataset.allocgid); if(!g) return;
+    const sum=g.products.filter(p=>!p.suspended).reduce((s,p)=>s+(+p._qty||0),0);
+    chip.textContent=`배분 ${sum} / 제안 ${g._need}`;
+    chip.classList.toggle("warn", sum!==g._need);
   });
 }
 function recalc(){
-  let amt=0, kinds=0, qtyTot=0;
+  let amt=0, lines=0, qtyTot=0;
   document.querySelectorAll("#rows .qty").forEach(inp=>{
-    const d=DRUGS[inp.dataset.i]; const q=+inp.value||0;
-    d._qty=q; amt+=q*d.unit; qtyTot+=q; if(q>0)kinds++;
-    if(!d.added) inp.closest("tr").classList.toggle("edited", q!==d._propose);
+    const q=+inp.value||0; let unit=0;
+    if(inp.dataset.pid!=null){
+      const p=FLAT[inp.dataset.pid]; p._qty=q; unit=p.unit;
+      const g=GENERICS.find(x=>x.id===p.genId);
+      const tr=inp.closest("tr");
+      tr.classList.toggle("edited", q!==(g.products.length>1 ? p._alloc : g._need));
+    } else if(inp.dataset.eid!=null){
+      const e=EXTRA[inp.dataset.eid]; e._qty=q; unit=e.unit;
+    }
+    amt+=q*unit; qtyTot+=q; if(q>0) lines++;
   });
-  document.getElementById("sumAmt").textContent = won(amt);
-  document.getElementById("sumKinds").firstChild.textContent = kinds;
-  return {amt,kinds,qtyTot};
+  document.getElementById("sumAmt").textContent=won(amt);
+  document.getElementById("sumKinds").firstChild.textContent=lines;
+  updateAllocChips();
+  return {amt,lines,qtyTot};
 }
 
-// 안전재고 수정 → ROP·제안발주량·입력란 즉시 재계산 / 발주량 수정 → 총액만 갱신
+// 안전재고 수정 → ROP·제안·배분 즉시 재계산 / 발주량 수정 → 총액·배분합계 갱신
 rowsEl.addEventListener("input", e=>{
   const t=e.target;
   if(t.classList.contains("safety")){
-    const d=DRUGS[t.dataset.i]; d.safety=+t.value||0;
-    computeRow(d); d._qty=d._propose;              // 기준이 바뀌었으니 발주량도 새 제안값으로
-    const tr=t.closest("tr");
-    tr.querySelector(".rop").textContent=d._rop;
-    tr.querySelector(".propose").innerHTML="<b>"+d._propose+"</b>";
-    tr.querySelector(".qty").value=d._propose;
-    t.classList.toggle("custom", d.safety!==d.safety0);
+    const g=GENERICS.find(x=>x.id===t.dataset.gid);
+    g.safety=+t.value||0; aggregate(g); allocate(g,true);   // 기준 변경 → 배분 재산정
+    if(g.products.length>1){ renderRows(); recalc(); return; }
+    const p=g.products[0], tr=t.closest("tr");
+    tr.querySelector(".rop").textContent=g._rop;
+    tr.querySelector(".propose").innerHTML="<b>"+g._need+"</b>";
+    tr.querySelector(".qty").value=p._qty;
+    t.classList.toggle("custom", g.safety!==g.safety0);
     tr.classList.remove("edited");
-    recalc();                                      // 발주량이 바뀌었으니 총액도 갱신
+    recalc();
+    return;
   }
   if(t.classList.contains("qty")) recalc();
 });
 // 직접추가 행 삭제
 rowsEl.addEventListener("click", e=>{
   if(e.target.classList.contains("rm")){
-    DRUGS.splice(+e.target.dataset.i,1); renderRows(); recalc();
+    EXTRA.splice(+e.target.dataset.eid,1); renderRows(); recalc();
   }
 });
 
 // ---------- 추가 발주 직접 입력 (권한자 수요 예측분) ----------
 const addSel=document.getElementById("addSel");
-MASTER.forEach((d,i)=>{ const o=document.createElement("option"); o.value=i;
-  o.textContent=d.name+(d.psy?" (향정)":""); addSel.appendChild(o); });
+GENERICS.forEach(g=>g.products.forEach(p=>{
+  const o=document.createElement("option");
+  o.textContent=g.gen+" — "+p.brand+(g.psy?" (향정)":"");
+  o.dataset.name=p.brand+" ("+g.gen+")"; o.dataset.unit=p.unit; o.dataset.psy=g.psy?"1":"";
+  addSel.appendChild(o);
+}));
 function toggleAddForm(show){
   const f=document.getElementById("addForm");
   const on = show===undefined ? !f.classList.contains("on") : show;
@@ -622,31 +709,28 @@ function toggleAddForm(show){
 function addReservation(){
   const qty=+document.getElementById("addQty").value||0;
   if(qty<=0){ toast("수량을 입력해 주세요."); return; }
-  const src=MASTER[+addSel.value];
+  const o=addSel.selectedOptions[0];
   const memo=document.getElementById("addMemo").value.trim();
-  DRUGS.push({added:true, name:src.name, psy:src.psy, unit:src.unit, memo, _qty:qty, _propose:qty});
+  EXTRA.push({added:true, name:o.dataset.name, psy:!!o.dataset.psy, unit:+o.dataset.unit, memo, _qty:qty});
   renderRows(); recalc();
   document.getElementById("addQty").value=""; document.getElementById("addMemo").value="";
   toggleAddForm(false);
   toast("추가 발주 품목이 반영되었습니다.");
 }
 
-// ---------- 제조사 전환 · 듀얼코드 ----------
-const BASE = new Date(2026,5,15);                  // 기준일 2026-06-15
-const addDays = (dt,n)=>{ const x=new Date(dt); x.setDate(x.getDate()+n); return x; };
-const fmtMD = dt=>(dt.getMonth()+1)+"/"+dt.getDate();
-
+// ---------- 제조사 전환 · 듀얼코드 (한 성분 라인에 상품 2개) ----------
 function openTrans(){
   const sel=document.getElementById("tTarget"); sel.innerHTML="";
-  DRUGS.forEach((d,i)=>{ if(d.added||d.transNew||d.transition||d.dual) return;   // 일반 활성 품목만
-    const o=document.createElement("option"); o.value=i; o.textContent=d.name; sel.appendChild(o); });
+  GENERICS.forEach(g=>{ if(g.products.filter(p=>!p.suspended).length!==1) return;   // 단일 상품 성분만
+    const o=document.createElement("option"); o.value=g.id; o.textContent=g.gen; sel.appendChild(o); });
   syncTransDefaults(); syncTransMode();
   document.getElementById("ovTrans").classList.add("on");
 }
 function closeTrans(){ document.getElementById("ovTrans").classList.remove("on"); }
 function syncTransDefaults(){
-  const d=DRUGS[+document.getElementById("tTarget").value]; if(!d) return;
-  document.getElementById("tNewUnit").value=d.unit;
+  const g=GENERICS.find(x=>x.id===document.getElementById("tTarget").value); if(!g) return;
+  const p=g.products.find(x=>!x.suspended);
+  document.getElementById("tNewUnit").value=p?p.unit:0;
 }
 function syncTransMode(){
   const dual=document.querySelector("input[name=tmode]:checked").value==="dual";
@@ -655,50 +739,55 @@ function syncTransMode(){
   document.getElementById("tCanReadyWrap").style.display=canReq?"flex":"none";
 }
 function applyTrans(){
-  const i=+document.getElementById("tTarget").value, d=DRUGS[i];
+  const g=GENERICS.find(x=>x.id===document.getElementById("tTarget").value); if(!g) return;
+  const old=g.products.find(p=>!p.suspended); if(!old) return;
   const mode=document.querySelector("input[name=tmode]:checked").value;
-  const newName=document.getElementById("tNewName").value.trim() || (mode==="dual"?"(타 제조사) ":"(신제조사) ")+d.name;
-  const newUnit=+document.getElementById("tNewUnit").value||d.unit;
+  const newName=document.getElementById("tNewName").value.trim();
+  const newUnit=+document.getElementById("tNewUnit").value||old.unit;
   const lead=+document.getElementById("tLead").value||2;
   const canReq=document.getElementById("tCanReq").checked;
   const canReady=canReq?document.getElementById("tCanReady").checked:false;
   const buf=+document.getElementById("tBuf").value||0;
-
-  // 신제품: 같은 라인 수요(avg·safety) 승계, 현재고 0부터 시작
-  const newObj={ transNew:true, mode, name:newName, psy:d.psy, vol:false,
-    stock:0, safety:d.safety, safety0:d.safety, avg:d.avg, lead, unit:newUnit,
-    lineFrom:d.name, canReq, canReady };
+  const np={ brand:newName||((mode==="dual"?"(타 제조사) ":"(신제조사) ")+old.brand), maker:"",
+             stock:0, share:0, unit:newUnit, lead, genId:g.id, transNew:true, canReq, canReady };
 
   if(mode==="switch"){
-    const soldDays=Math.floor(d.stock/d.avg);        // 구제품 예상 소진
+    const soldDays=Math.floor(old.stock/(g.avg||1));        // 구제품 예상 소진
     const soldOut=addDays(BASE,soldDays);
-    const dueOrder=addDays(soldOut,-(lead+buf));      // 무중단: 소진 - (리드타임+버퍼) 전 발주
-    d.transition={ mode:"switch", soldOut, newName };
-    d._propose=0; d._qty=0;                           // 구제품 발주 중단
-    newObj.soldOut=soldOut; newObj.dueOrder=dueOrder;
-    DRUGS.splice(i+1,0,newObj);                        // 구제품 바로 뒤에 신제품
+    const dueOrder=addDays(soldOut,-(lead+buf));            // 무중단: 소진 - (리드타임+버퍼) 전 발주
+    old.suspended=true;                                     // 구제품 발주 중단(잔여 소진)
+    np.share=old.share;                                     // 수요(배분 가중치)를 신제품이 승계
+    np.note = (dueOrder<BASE ? '<span class="urgent">🔴 발주 마감 경과 — 즉시 발주</span>'
+                             : `${old.brand} 대체 · 신제품 발주 마감 ${fmtMD(dueOrder)}`)
+            + (canReq ? (canReady ? ' · <span class="ok">캐니스터 ✔ 준비완료</span>'
+                                  : ` · <span class="warn">캐니스터 ⚠ 미준비 — 소진(${fmtMD(soldOut)}) 전 준비 안 되면 연속 처방 중단 위험</span>`) : '');
     toast("제조사 전환이 설정되었습니다. (무중단 전환)");
   } else {
-    d.dual=true;                                      // 구제품 발주 유지
-    DRUGS.push(newObj);
-    toast("듀얼코드 품목이 추가되었습니다.");
+    np.share=0;                                             // 듀얼코드: 수요배분은 ③단계에서 조정
+    np.note = `${old.brand}와 병행`
+            + (canReq ? (canReady ? ' · <span class="ok">캐니스터 ✔ 준비완료</span>' : ' · <span class="warn">캐니스터 ⚠ 미준비</span>') : '');
+    toast("듀얼코드 품목이 추가되었습니다. (수요 배분은 상품별 입력에서 조정)");
   }
-  renderRows(); recalc(); closeTrans();
+  g.products.push(np);
+  computeAll(); renderRows(); recalc(); closeTrans();
 }
 document.getElementById("ovTrans").addEventListener("click",e=>{ if(e.target.id==="ovTrans") closeTrans(); });
 
-// ---------- 재고·유효기간 관리 ----------
-// 데이터: 이지스(사용)+신성아트컴(입고 lot·유효기간) 자동 집계 가정. 완통/개봉은 길① 실사.
+// ========================================================================
+//  재고·유효기간 관리 (상품·lot 레벨)
+//  같은 성분도 브랜드·lot 별 별도 행으로 분리 (예: 아리피프라졸 = 아빌리파이 + 아라빌)
+// ========================================================================
 const INV=[
- {name:"알프라졸람정 0.25mg", psy:true,  stock:2200, avg:42, pack:200, lot:"AX2403", expiry:"2026-07-31", shipDate:"2026-03-05", unit:35},
- {name:"클로나제팜정 0.5mg",  psy:true,  stock:900,  avg:26, pack:100, lot:"CL2312", expiry:"2027-03-31", shipDate:"2026-05-01", unit:48},
- {name:"졸피뎀정 10mg",       psy:true,  stock:300,  avg:55, pack:200, lot:"ZP2401", expiry:"2026-05-30", shipDate:"2025-12-10", unit:190},
- {name:"로라제팜정 1mg",      psy:true,  stock:700,  avg:30, pack:100, lot:"LO2402", expiry:"2027-01-31", shipDate:"2026-04-20", unit:42},
- {name:"에스시탈로프람정 10mg",psy:false, stock:3600, avg:48, pack:500, lot:"ES2401", expiry:"2026-08-20", shipDate:"2026-04-01", unit:260},
- {name:"설트랄린정 50mg",     psy:false, stock:2400, avg:40, pack:200, lot:"SE2312", expiry:"2026-07-15", shipDate:"2026-05-20", unit:230},
- {name:"쿠에티아핀정 25mg",   psy:false, stock:800,  avg:36, pack:200, lot:"QU2402", expiry:"2027-02-28", shipDate:"2026-05-10", unit:155},
- {name:"아리피프라졸정 10mg", psy:false, stock:2600, avg:22, pack:100, lot:"AR2308", expiry:"2026-09-30", shipDate:"2025-02-15", unit:520},
- {name:"멜라토닌서방정 2mg",  psy:false, stock:600,  avg:33, pack:100, lot:"ME2403", expiry:"2027-05-31", shipDate:"2026-06-01", unit:410},
+ {name:"디오피정 0.25mg",   gen:"알프라졸람 0.25mg",  psy:true,  stock:2200, avg:42, pack:200, lot:"AX2403", expiry:"2026-07-31", shipDate:"2026-03-05", unit:35},
+ {name:"리보트릴 0.5mg",    gen:"클로나제팜 0.5mg",   psy:true,  stock:900,  avg:26, pack:100, lot:"CL2312", expiry:"2027-03-31", shipDate:"2026-05-01", unit:48},
+ {name:"스틸녹스CR 10mg",   gen:"졸피뎀 10mg",        psy:true,  stock:300,  avg:55, pack:200, lot:"ZP2401", expiry:"2026-05-30", shipDate:"2025-12-10", unit:190},
+ {name:"아티반 1mg",        gen:"로라제팜 1mg",       psy:true,  stock:700,  avg:30, pack:100, lot:"LO2402", expiry:"2027-01-31", shipDate:"2026-04-20", unit:42},
+ {name:"렉사프로 10mg",     gen:"에스시탈로프람 10mg", psy:false, stock:3600, avg:48, pack:500, lot:"ES2401", expiry:"2026-08-20", shipDate:"2026-04-01", unit:260},
+ {name:"졸로푸트 50mg",     gen:"설트랄린 50mg",      psy:false, stock:2400, avg:40, pack:200, lot:"SE2312", expiry:"2026-07-15", shipDate:"2026-05-20", unit:230},
+ {name:"쎄로켈 25mg",       gen:"쿠에티아핀 25mg",    psy:false, stock:800,  avg:36, pack:200, lot:"QU2402", expiry:"2027-02-28", shipDate:"2026-05-10", unit:155},
+ {name:"아빌리파이 10mg",   gen:"아리피프라졸 10mg",  psy:false, stock:1600, avg:14, pack:100, lot:"AR2308", expiry:"2026-09-30", shipDate:"2025-02-15", unit:520},
+ {name:"아라빌 10mg",       gen:"아리피프라졸 10mg",  psy:false, stock:1000, avg:8,  pack:100, lot:"AB2402", expiry:"2027-04-30", shipDate:"2026-05-10", unit:330},
+ {name:"서카딘 2mg",        gen:"멜라토닌서방 2mg",   psy:false, stock:600,  avg:33, pack:100, lot:"ME2403", expiry:"2027-05-31", shipDate:"2026-06-01", unit:410},
 ];
 const parseD = s=>{ const[y,m,dd]=s.split("-").map(Number); return new Date(y,m-1,dd); };
 const daysTo = dt=>Math.round((dt-BASE)/86400000);
@@ -733,7 +822,7 @@ function renderInv(){
     const dd = d._dte<0 ? `<span class="dday over">경과 ${-d._dte}일</span>`
                         : `<span class="dday ${d._dte<=180?'soon':''}">D-${d._dte}</span>`;
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td class="l name">${d.name}${d.psy?'<span class="b psy">향정</span>':''}</td>
+    tr.innerHTML=`<td class="l name">${d.name}${d.psy?'<span class="b psy">향정</span>':''}<span class="gsub">${d.gen}</span></td>
       <td>${d.stock}<small style="color:var(--muted)"> 정</small><br><small style="color:var(--muted)">≈${whole}통+${rem}</small></td>
       <td class="l" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">${d.lot}</td>
       <td class="l">${d.expiry}<br>${dd}</td>
@@ -803,44 +892,39 @@ function confirmStock(){ const label=document.getElementById("stConfirm").textCo
 ["stWhole","stOpen"].forEach(id=>document.getElementById(id).addEventListener("input",judgeStock));
 document.getElementById("ovStock").addEventListener("click",e=>{ if(e.target.id==="ovStock") closeStock(); });
 
-renderInv(); updateInvBanner();
-
-renderRows();
-recalc();
-// 초기 1회: 직접 ②③ 탭으로 가도 숫자가 일관되도록 기본 제안량으로 채워둠
-
-
-// ---------- order snapshot → drives Screen 3 & 4 (kept consistent w/ Screen 2) ----------
-// 출고 시나리오: 대부분 정상, 졸피뎀 부분출고(75%), 아리피프라졸 미출고 — 부분출고 UX 시연용
-const SHIP_RATIO = {"졸피뎀정 10mg":0.75, "아리피프라졸정 10mg":0};
+// ---------- order snapshot → drives Screen 3 & 4 (성분 합산 → 상품 배분으로 발주) ----------
+// 출고 시나리오: 대부분 정상, 스틸녹스CR 부분출고(75%), 아라빌 미출고 — 부분출고 UX 시연용
+const SHIP_RATIO = {"스틸녹스CR":0.75, "아라빌":0};
 const shipEl = document.getElementById("shipRows");
 
+function orderLines(){
+  const lines=[];
+  GENERICS.forEach(g=>g.products.forEach(p=>{
+    if(!p.suspended && (p._qty||0)>0) lines.push({name:p.brand+" ("+g.gen+")", short:p.brand, psy:g.psy, unit:p.unit, qty:p._qty});
+  }));
+  EXTRA.forEach(e=>{ if((e._qty||0)>0) lines.push({name:e.name, short:e.name, psy:e.psy, unit:e.unit, qty:e._qty}); });
+  return lines;
+}
 function populateOrder(){
-  let amt=0, kinds=0, qtyTot=0, psy=0;
-  shipEl.innerHTML="";
+  const lines=orderLines();
+  let amt=0, qtyTot=0, psy=0; shipEl.innerHTML="";
   let partialName="", partialShip=0, partialOrder=0;
-  DRUGS.forEach(d=>{
-    const order=d._qty||0;
-    if(order<=0) return;
-    amt+=order*d.unit; qtyTot+=order; kinds++; if(d.psy)psy++;
-    const ratio = (d.name in SHIP_RATIO)?SHIP_RATIO[d.name]:1;
-    const ship = ceilPack(order*ratio)>order?order:Math.round(order*ratio);
-    let st = ship===order ? '<span class="st full">정상</span>'
+  lines.forEach(L=>{
+    amt+=L.qty*L.unit; qtyTot+=L.qty; if(L.psy)psy++;
+    const ratio = (L.short in SHIP_RATIO)?SHIP_RATIO[L.short]:1;
+    const ship = Math.round(L.qty*ratio);
+    let st = ship===L.qty ? '<span class="st full">정상</span>'
           : ship===0 ? '<span class="st none">미출고</span>'
           : '<span class="st part">부분</span>';
-    if(ship>0 && ship<order){ partialName=d.name; partialShip=ship; partialOrder=order; }
-    const badge = d.psy?'<span class="b psy">향정</span>':'';
+    if(ship>0 && ship<L.qty){ partialName=L.short; partialShip=ship; partialOrder=L.qty; }
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td class="l name">${d.name}${badge}</td><td>${order}</td><td>${ship}</td>
+    tr.innerHTML=`<td class="l name">${L.name}${L.psy?'<span class="b psy">향정</span>':''}</td><td>${L.qty}</td><td>${ship}</td>
       <td class="l" style="padding-left:16px">${st}</td>`;
     shipEl.appendChild(tr);
   });
-  // Screen 3 summary
-  s3Kinds.textContent=kinds; s3Qty.textContent=qtyTot.toLocaleString("ko-KR");
-  s3Amt.textContent=won(amt); s3Psy.textContent=psy;
-  // Screen 4 header
+  const kinds=lines.length;
+  s3Kinds.textContent=kinds; s3Qty.textContent=qtyTot.toLocaleString("ko-KR"); s3Amt.textContent=won(amt); s3Psy.textContent=psy;
   s4Kinds.textContent=kinds; s4Amt.textContent=won(amt);
-  // 부분출고 배너
   if(partialName){
     document.getElementById("partialMsg").innerHTML =
       `<b>부분 출고 1건</b> 발생 — 약사 우선 확인이 필요합니다. (${partialName}: ${partialShip} / ${partialOrder}정 출고, 잔여분 익일 추가 출고 예정)`;
@@ -857,8 +941,10 @@ document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=
 
 // ---------- confirm modal ----------
 function openConfirm(){
-  const {amt,kinds,qtyTot}=recalc();
-  mKinds.textContent=kinds+" 종"; mQty.textContent=qtyTot.toLocaleString("ko-KR")+" 정"; mAmt.textContent=won(amt);
+  const {amt,lines,qtyTot}=recalc();
+  const psy=orderLines().filter(L=>L.psy).length;
+  mKinds.textContent=lines+" 종"; mQty.textContent=qtyTot.toLocaleString("ko-KR")+" 정"; mAmt.textContent=won(amt);
+  document.getElementById("mPsy").textContent=psy+" 종 (별도 관리대장 기록)";
   document.getElementById("ov").classList.add("on");
 }
 function closeConfirm(){document.getElementById("ov").classList.remove("on");}
@@ -873,8 +959,12 @@ function toast(msg){
   clearTimeout(tT); tT=setTimeout(()=>{t.style.opacity="0";t.style.transform="translateX(-50%) translateY(20px)";},2600);
 }
 
-// 초기 채움 (기본 제안량 기준)
-populateOrder();
+// ---------- init ----------
+renderInv(); updateInvBanner();
+computeAll();
+renderRows();
+recalc();
+populateOrder();   // 직접 ②③ 탭으로 가도 숫자가 일관되도록 기본 제안량으로 채워둠
 </script>
 </body>
 </html>
