@@ -130,6 +130,13 @@
   .gsub{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:1px}
   .flip-btn{border:1px solid var(--brand);background:#fff;color:var(--brand-dk);font-size:11.5px;font-weight:700;padding:5px 9px;border-radius:8px;cursor:pointer;white-space:nowrap}
   .flip-btn:hover{background:var(--brand-soft)}
+  .restore-btn{border:1px solid var(--line);background:#fff;color:var(--muted);font-size:11px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  .restore-btn.on{border-color:var(--ok);color:var(--ok);background:var(--ok-soft)}
+  tr.rec-row>td{background:#eef9f1}
+  .rec{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#14532d}
+  .rec b{color:#14532d;font-weight:800}
+  .rec-why{font-size:11.5px;color:#3f7a52;background:#dcf3e3;padding:2px 8px;border-radius:6px;font-weight:700}
+  .rec-x{border:1px solid var(--line);background:#fff;color:var(--muted);font-size:11.5px;font-weight:700;padding:5px 9px;border-radius:8px;cursor:pointer}
   /* 재고·유효기간 */
   .invsum{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
   .invsum .cell{background:#fff;padding:13px 14px}
@@ -261,7 +268,7 @@
       <ul>
         <li><b>+1일 보장</b> · 6/19(금) 임시공휴일 감지 → 리드타임 보정으로 전 품목 보장기간 +1일</li>
         <li><b>+18%</b> · <b>졸피뎀정</b> 최근 2주 처방 증가 추세 → 제안량 상향</li>
-        <li><b>스위칭 구간</b> · <b>클로나제팜</b>(환인 재고 불안 → 리보트릴로 전환 중) → 두 브랜드 재고 합산, 발주는 전환 대상 리보트릴로</li>
+        <li><b>스위칭 구간</b> · <b>클로나제팜</b>(리보트릴 품절 → 환인클로나제팜 사용 중) → 재고 합산·발주는 환인으로. 리보트릴 공급 재개 시 <b>리가메디 마진 비교</b>로 재스위칭 추천</li>
       </ul>
     </div>
   </div>
@@ -533,9 +540,11 @@ const GENERICS = [
   // 공급이슈 스위칭 예시 — 클로나제팜: 환인클로나제팜 재고 불안 → 리보트릴로 전환 중(양방향 가능)
   {id:"clzp", gen:"클로나제팜정 0.5mg",  psy:true,  vol:false, switching:true, switchKind:"supply",
    avg:26, safety:80, lead:2, ai:0,
+   // 매입가(cost)로 리가메디 마진 판단 — 리보트릴 마진 ₩12 > 환인 ₩8.
+   // 시나리오: 리보트릴 품절 → 환인으로 전환됨. 리보트릴 공급 재개 시 마진 우위라 재스위칭 추천 대상.
    products:[
-     {brand:"리보트릴",       maker:"로슈", stock:50, unit:48, active:true,  note:"전환 대상 · 공급 안정 → 발주"},
-     {brand:"환인클로나제팜", maker:"환인", stock:30, unit:39, active:false, note:"공급 불안 · 잔여 소진"},
+     {brand:"리보트릴",       maker:"로슈", stock:50, unit:48, cost:36, active:false, restored:false, note:"품절로 전환됨 · 잔여 소진"},
+     {brand:"환인클로나제팜", maker:"환인", stock:30, unit:39, cost:31, active:true,                  note:"현재 사용 · 발주 대상"},
    ]},
 
   {id:"zolp", gen:"졸피뎀정 10mg",       psy:true,  vol:true,  switching:false,
@@ -628,10 +637,29 @@ function renderSwitch(g){                                // 전환/스위칭: �
       <td style="color:var(--muted)">·</td>
       <td class="rop" style="color:var(--muted)">·</td>
       <td class="propose" style="color:var(--muted)">${isAct?'<b>'+p._alloc+'</b>':'중단'}</td>
-      <td>${isAct?`<input class="qty" type="number" min="0" step="10" value="${p._qty}" data-pid="${idx}">`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td>${isAct?`<input class="qty" type="number" min="0" step="10" value="${p._qty}" data-pid="${idx}">`
+                 :(g.switchKind==="supply"?`<button class="restore-btn${p.restored?' on':''}" onclick="toggleRestore('${g.id}','${p.brand}')">${p.restored?'공급재개 ✔':'공급재개'}</button>`:'<span style="color:var(--muted)">—</span>')}</td>
       <td class="l"><input class="memo" placeholder="메모" ${g.psy?'value="향정 대장"':''}></td>`;
     rowsEl.appendChild(tr);
   });
+  // 공급 재개 → 리가메디 마진 비교로 재스위칭 추천(마진 우위 시) / 유지 권장(현재가 우위면 추천 안 함)
+  const back = g.products.find(p=>p!==g._active && p.restored);
+  if(back){
+    if(gMargin(back)>gMargin(g._active)){
+      if(!g.recDismissed){
+        const tr=document.createElement("tr"); tr.className="rec-row";
+        tr.innerHTML=`<td class="l" colspan="8"><div class="rec">🔁 <b>${back.brand}</b> 공급 재개 — <b>재스위칭 권장</b>
+          <span class="rec-why">리가메디 마진 ↑ (₩${gMargin(back)} > ₩${gMargin(g._active)}/정)</span>
+          <button class="flip-btn" onclick="reSwitch('${g.id}','${back.brand}')">${back.brand}(으)로 재스위칭</button>
+          <button class="rec-x" onclick="dismissRec('${g.id}')">무시</button></div></td>`;
+        rowsEl.appendChild(tr);
+      }
+    } else {
+      const tr=document.createElement("tr"); tr.className="rec-row"; tr.style.background="#f6f8fc";
+      tr.innerHTML=`<td class="l" colspan="8"><div class="rec" style="color:var(--muted)">ℹ️ <b>${back.brand}</b> 공급 재개됨 — 현재 <b>${g._active.brand}</b> 마진 우위로 <b>유지 권장</b> (재스위칭 추천 안 함)</div></td>`;
+      rowsEl.appendChild(tr);
+    }
+  }
 }
 function renderRows(){
   rowsEl.innerHTML="";
@@ -699,9 +727,27 @@ function switchFlip(gid){
   const cur=g.products.findIndex(p=>p.active);
   g.products.forEach(p=>p.active=false);
   g.products[(cur+1)%g.products.length].active=true;
+  g.recDismissed=false;
   computeSwitch(g,true); renderRows(); recalc();
   toast(`발주 대상이 '${g._active.brand}'(으)로 전환되었습니다.`);
 }
+
+// 리가메디 매입가 기준 마진(원/정). 공급 재개된 브랜드가 현재 발주 브랜드보다 마진 높으면 재스위칭 추천.
+function gMargin(p){ return (p.unit||0)-(p.cost||0); }
+function toggleRestore(gid,brand){                       // 리가메디 측 '공급 재개/품절 해소' 입력
+  const g=GENERICS.find(x=>x.id===gid); if(!g) return;
+  const p=g.products.find(x=>x.brand===brand); p.restored=!p.restored; g.recDismissed=false;
+  renderRows(); recalc();
+  toast(p.restored?`'${brand}' 공급 재개로 표시했습니다.`:`'${brand}' 공급 재개 표시를 해제했습니다.`);
+}
+function reSwitch(gid,brand){                             // 추천 수락 → 해당 브랜드로 재스위칭
+  const g=GENERICS.find(x=>x.id===gid); if(!g) return;
+  g.products.forEach(p=>p.active=(p.brand===brand));
+  const np=g.products.find(p=>p.brand===brand); if(np) np.restored=false; g.recDismissed=false;
+  computeSwitch(g,true); renderRows(); recalc();
+  toast(`${brand}(으)로 재스위칭되었습니다. (공급 재개 · 리가메디 마진 우위)`);
+}
+function dismissRec(gid){ const g=GENERICS.find(x=>x.id===gid); if(g){ g.recDismissed=true; renderRows(); recalc(); } }
 
 // ---------- 추가 발주 직접 입력 (권한자 수요 예측분) ----------
 const addSel=document.getElementById("addSel");
@@ -759,11 +805,12 @@ function applyTrans(){
 
   // 성분 수요(avg·safety·lead)를 generic으로 올리고, 전환/스위칭 구간으로 전환
   g.switching=true; g.switchKind=mode; g.avg=old.avg; g.safety=old.safety; g.safety0=old.safety; g.lead=old.lead; g.ai=old.ai||0;
+  if(old.cost==null) old.cost=Math.round(old.unit*0.8);   // 매입가 미상 시 가정(마진 비교용)
   old.active=false;                                       // 구제품 발주 중단(잔여 소진)
   const soldDays=Math.floor(old.stock/(old.avg||g.avg||1));
   const soldOut=addDays(BASE,soldDays);
   const dueOrder=addDays(soldOut,-(lead+buf));
-  const np={ brand, maker:"", stock:0, unit:newUnit, active:true, genId:g.id, transNew:true, canReq, canReady,
+  const np={ brand, maker:"", stock:0, unit:newUnit, cost:Math.round(newUnit*0.78), active:true, genId:g.id, transNew:true, canReq, canReady,
     note:(dueOrder<BASE?'<span class="urgent">🔴 발주 마감 경과 — 즉시 발주</span>'
                        :`전환 대상 · 신제품 발주 마감 ${fmtMD(dueOrder)}`)
         +(canReq?(canReady?' · <span class="ok">캐니스터 ✔ 준비완료</span>'
