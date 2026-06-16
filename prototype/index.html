@@ -94,6 +94,12 @@
   .uploadbar .ub-note{color:var(--muted);font-size:12px;display:block;margin-top:1px}
   .ub-result{background:var(--ok-soft);border:1px solid #bfe6cb;border-radius:10px;padding:10px 14px;margin:-4px 0 16px;font-size:13px;color:#14532d}
   .ub-result b{color:#14532d}
+  /* 수집 에이전트 */
+  .agsteps{display:flex;flex-direction:column;gap:9px;margin:6px 0 4px}
+  .agstep{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--muted)}
+  .agstep .dot{width:21px;height:21px;border-radius:50%;background:#eef1f5;color:#94a3b8;display:grid;place-items:center;font-size:11px;font-weight:800;flex:none}
+  .agstep.done{color:var(--ink)} .agstep.done .dot{background:var(--ok);color:#fff}
+  .agstep.run{color:var(--brand-dk);font-weight:600} .agstep.run .dot{background:var(--brand);color:#fff}
   /* 예약·직접 추가 */
   .addwrap{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px}
   .btn.add{background:#fff;border:1.5px dashed var(--brand);color:var(--brand-dk);font-size:13.5px;padding:9px 15px}
@@ -249,6 +255,7 @@
     <div class="logo">리가메디 WOS <small>Web Order System</small></div>
     <span class="badge-demo">PROTOTYPE · 목업데이터</span>
     <div class="tabs">
+      <button data-go="s1">⓪ 수집 에이전트</button>
       <button data-go="s2" class="on">① 주문 제안</button>
       <button data-go="s3">② 승인 완료</button>
       <button data-go="s4">③ 진행 추적</button>
@@ -259,6 +266,38 @@
 </div>
 
 <div class="wrap">
+
+<!-- ============ SCREEN 1 : 수집 에이전트 ============ -->
+<section id="s1" class="screen">
+  <h1>원내 수집 에이전트 <span class="pill green" style="vertical-align:middle">연결됨</span></h1>
+  <div class="sub">경희채움정신과 PC에 설치 · 이지스 현재고를 자동 수집해 리가메디 산출 사이트(①)로 전송합니다. <b>완전 자동(RPA)</b>, 실패 시 <b>반자동 1클릭</b>으로 전환. (환자정보 제외 · 약품 재고만)</div>
+
+  <div class="summary" style="grid-template-columns:repeat(4,1fr)">
+    <div class="cell"><div class="k">연결 상태</div><div class="v" style="color:var(--ok)">● 정상</div></div>
+    <div class="cell"><div class="k">수집 방식</div><div class="v" style="font-size:15px" id="agMode">완전 자동(RPA)</div></div>
+    <div class="cell"><div class="k">자동 수집</div><div class="v" style="font-size:15px">매일 22:00</div></div>
+    <div class="cell"><div class="k">마지막 수집</div><div class="v" style="font-size:14px" id="agLast">06-15 22:00 · 성공</div></div>
+  </div>
+
+  <div class="card pad">
+    <p class="sectitle">수집 진행 (이지스 화면 자동 조작)</p>
+    <div id="agSteps" class="agsteps"></div>
+    <div class="bar">
+      <span class="note">전송 범위: 약품코드·수량·lot·유효기간 (환자 식별정보 제외 · PIPA)</span>
+      <span class="spacer"></span>
+      <button class="btn ghost" onclick="agFail()">자동화 실패 시뮬레이션</button>
+      <button class="btn primary" onclick="agCollect(false)">지금 수집</button>
+    </div>
+  </div>
+
+  <div class="card pad" style="margin-top:16px">
+    <p class="sectitle">수집 이력</p>
+    <table>
+      <thead><tr><th class="l">일시</th><th class="l">방식</th><th>품목 수</th><th class="l">결과</th></tr></thead>
+      <tbody id="agHist"></tbody>
+    </table>
+  </div>
+</section>
 
 <!-- ============ SCREEN 2 : 주문 제안 ============ -->
 <section id="s2" class="screen on">
@@ -572,6 +611,18 @@
     <div class="acts">
       <button class="btn ghost" onclick="closeStock()">취소</button>
       <button class="btn primary" id="stConfirm" onclick="confirmStock()">확정</button>
+    </div>
+  </div>
+</div>
+
+<!-- 반자동 1클릭 팝업 -->
+<div class="ov" id="ovAgent">
+  <div class="modal" style="max-width:420px">
+    <h3>⚠ 자동 수집 일시 중단</h3>
+    <p>이지스 화면 변경 등으로 자동 수집이 멈췄습니다. 약사님, 아래 버튼을 <b>한 번만</b> 눌러 수집을 이어주세요. 이후 전송·산출은 자동입니다.</p>
+    <div class="acts">
+      <button class="btn ghost" onclick="closeAgent()">나중에</button>
+      <button class="btn primary" onclick="agSemi()">이지스에서 재고 수집 1회 실행</button>
     </div>
   </div>
 </div>
@@ -1181,7 +1232,49 @@ function downloadStockTemplate(){
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="현재고_양식.csv"; a.click();
 }
 
+// ---------- 수집 에이전트 (원내 PC 트레이앱 목업) ----------
+const AG_STEPS=["이지스 실행 · 로그인","현재고 메뉴 · 오늘(06-15) 조회","엑셀 내려받기","검증(파일·날짜·건수)","리가메디 산출 사이트로 전송"];
+const AG_HIST=[
+  {time:"06-15 22:00", mode:"완전 자동", n:142, ok:true},
+  {time:"06-12 22:00", mode:"완전 자동", n:139, ok:true},
+  {time:"06-11 09:10", mode:"반자동(1클릭)", n:140, ok:true},
+];
+function renderAgSteps(active){
+  document.getElementById("agSteps").innerHTML=AG_STEPS.map((s,i)=>{
+    let cls='', mark=i+1;
+    if(i<active){cls='done';mark='✓';} else if(i===active){cls='run';}
+    return `<div class="agstep ${cls}"><div class="dot">${mark}</div>${s}</div>`;
+  }).join('');
+}
+function renderAgHist(){
+  document.getElementById("agHist").innerHTML=AG_HIST.map(h=>
+    `<tr><td class="l">${h.time}</td><td class="l">${h.mode}</td><td>${h.n}</td>
+     <td class="l"><span class="st2 ${h.ok?'ok':'danger'}">${h.ok?'성공':'실패'}</span></td></tr>`).join('');
+}
+function closeAgent(){ document.getElementById("ovAgent").classList.remove("on"); }
+function agFail(){ document.getElementById("agMode").textContent="자동화 중단"; document.getElementById("ovAgent").classList.add("on"); }
+function agSemi(){ closeAgent(); agCollect(true); }
+let agBusy=false;
+function agCollect(semi){
+  if(agBusy) return; agBusy=true; closeAgent();
+  renderAgSteps(0); let i=0;
+  const t=setInterval(()=>{
+    i++; renderAgSteps(i);
+    if(i>=AG_STEPS.length){
+      clearInterval(t); agBusy=false;
+      loadSampleStock();                              // 수집 결과를 ① 산출 사이트에 반영
+      AG_HIST.unshift({time:"06-16 09:05", mode:semi?"반자동(1클릭)":"완전 자동", n:142, ok:true});
+      renderAgHist();
+      document.getElementById("agMode").textContent=semi?"반자동(1클릭)":"완전 자동(RPA)";
+      document.getElementById("agLast").textContent="방금 · 성공"+(semi?" (반자동)":"");
+      toast("이지스 현재고 수집 완료 → ① 산출 사이트에 반영되었습니다.");
+    }
+  },600);
+}
+document.getElementById("ovAgent").addEventListener("click",e=>{ if(e.target.id==="ovAgent") closeAgent(); });
+
 // ---------- init ----------
+renderAgSteps(AG_STEPS.length); renderAgHist();
 renderNims();
 renderInv(); updateInvBanner();
 computeAll();
