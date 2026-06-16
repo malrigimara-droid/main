@@ -32,12 +32,17 @@ export interface StageReading {
 export type GapResolution = "managed_elsewhere" | "true_gap";
 export type GapAnswers = Partial<Record<Stage, GapResolution>>;
 
-// 인테이크 설문 문항 생성기 (unmeasured 단계마다 1문항)
-export function gapQuestion(r: StageReading): { stage: Stage; question: string; options: { label: string; resolves: GapResolution }[] } {
+// gap 확인은 '새 문항'이 아니라 기존 단골/재방문(loyalty) 문항에 흡수한다 (순증 문항 0).
+// 그리고 해당 단계가 '측정 전'일 때만 노출 — 이미 측정된 가게는 설문이 더 짧아진다.
+export function gapOptionsForLoyalty(r: StageReading): {
+  attachTo: "loyalty";
+  showWhen: boolean;                         // 측정 전일 때만 true
+  addOptions: { label: string; resolves: GapResolution }[];
+} {
   return {
-    stage: r.stage,
-    question: `${r.label}을 지금 어떻게 챙기세요?`,
-    options: [
+    attachTo: "loyalty",
+    showWhen: r.confidence === "unmeasured",
+    addOptions: [
       { label: "네이버예약/캐치테이블/전화장부 등으로 관리 중", resolves: "managed_elsewhere" },
       { label: "따로 안 함", resolves: "true_gap" },
     ],
