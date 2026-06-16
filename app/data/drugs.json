@@ -1,0 +1,33 @@
+{
+  "generics": [
+    {"id":"alpz","gen":"알프라졸람정 0.25mg","psy":true,"vol":true,"switching":false,
+     "products":[{"brand":"디오피정","maker":"환인","stock":140,"avg":42,"safety":120,"lead":2,"unit":35,"ai":0}]},
+
+    {"id":"clzp","gen":"클로나제팜정 0.5mg","psy":true,"vol":false,"switching":true,"switchKind":"supply","avg":26,"safety":80,"lead":2,"ai":0,
+     "products":[
+       {"brand":"리보트릴","maker":"로슈","stock":50,"unit":48,"cost":36,"active":false},
+       {"brand":"환인클로나제팜","maker":"환인","stock":30,"unit":39,"cost":31,"active":true}
+     ]},
+
+    {"id":"zolp","gen":"졸피뎀정 10mg","psy":true,"vol":true,"switching":false,
+     "products":[{"brand":"스틸녹스CR","maker":"한독","stock":60,"avg":55,"safety":150,"lead":2,"unit":190,"ai":18}]},
+
+    {"id":"lora","gen":"로라제팜정 1mg","psy":true,"vol":false,"switching":false,
+     "products":[{"brand":"아티반","maker":"일동","stock":110,"avg":30,"safety":90,"lead":2,"unit":42,"ai":0}]},
+
+    {"id":"esci","gen":"에스시탈로프람정 10mg","psy":false,"vol":false,"switching":false,
+     "products":[{"brand":"렉사프로","maker":"룬드벡","stock":200,"avg":48,"safety":160,"lead":2,"unit":260,"ai":0}]},
+
+    {"id":"sert","gen":"설트랄린정 50mg","psy":false,"vol":false,"switching":false,
+     "products":[{"brand":"졸로푸트","maker":"화이자","stock":170,"avg":40,"safety":140,"lead":2,"unit":230,"ai":0}]},
+
+    {"id":"quet","gen":"쿠에티아핀정 25mg","psy":false,"vol":false,"switching":false,
+     "products":[{"brand":"쎄로켈","maker":"아스트라제네카","stock":130,"avg":36,"safety":110,"lead":2,"unit":155,"ai":0}]},
+
+    {"id":"arip","gen":"아리피프라졸정 10mg","psy":false,"vol":false,"switching":false,
+     "products":[{"brand":"아빌리파이","maker":"오츠카","stock":80,"avg":22,"safety":70,"lead":2,"unit":520,"ai":0}]},
+
+    {"id":"mela","gen":"멜라토닌서방정 2mg","psy":false,"vol":true,"switching":false,
+     "products":[{"brand":"서카딘","maker":"건일","stock":50,"avg":33,"safety":95,"lead":2,"unit":410,"ai":0}]}
+  ]
+}
