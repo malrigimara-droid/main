@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>리가메디 WOS · 프로토타입</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --ink:#1a2433; --muted:#6b7785;
+    --line:#e3e8ef; --brand:#1f6feb; --brand-dk:#1a5fd0; --brand-soft:#eaf2ff;
+    --ok:#16a34a; --ok-soft:#e7f6ec; --warn:#d97706; --warn-soft:#fef3e2;
+    --psy:#ea580c; --psy-soft:#fff0e6; --vol:#ca8a04; --vol-soft:#fdf6e3;
+    --edit:#fff8e1; --danger:#dc2626;
+    --radius:14px; --shadow:0 1px 3px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,"Malgun Gothic",sans-serif;
+    background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 18px 80px}
+
+  /* demo nav */
+  .demonav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);margin-bottom:22px}
+  .demonav .inner{max-width:1040px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .demonav .logo{font-weight:800;letter-spacing:-.3px}
+  .demonav .logo small{color:var(--muted);font-weight:600;margin-left:6px;font-size:12px}
+  .demonav .tabs{display:flex;gap:6px;margin-left:auto}
+  .demonav button{border:1px solid var(--line);background:#fff;color:var(--muted);font-weight:600;font-size:13px;
+    padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .demonav button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .demonav .badge-demo{font-size:11px;color:#fff;background:#94a3b8;padding:3px 8px;border-radius:6px;font-weight:700}
+
+  .screen{display:none;animation:fade .25s ease}
+  .screen.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  h1{font-size:22px;margin:4px 0 2px;letter-spacing:-.4px}
+  .sub{color:var(--muted);font-size:13.5px;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .pad{padding:18px 20px}
+
+  /* header summary */
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+  .summary .cell{background:#fff;padding:15px 16px}
+  .summary .k{font-size:12px;color:var(--muted);margin-bottom:5px}
+  .summary .v{font-size:19px;font-weight:800;letter-spacing:-.5px}
+  .summary .v small{font-size:12px;font-weight:600;color:var(--muted);margin-left:3px}
+
+  /* AI banner */
+  .ai{display:flex;gap:12px;background:linear-gradient(90deg,#eef4ff,#f6f0ff);border:1px solid #dce6fb;
+    border-radius:12px;padding:13px 15px;margin-bottom:16px}
+  .ai .dot{width:30px;height:30px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;
+    font-size:15px;flex:none}
+  .ai .t{font-size:13.5px}
+  .ai .t b{color:var(--brand-dk)}
+  .ai ul{margin:6px 0 0;padding-left:18px;color:#334155}
+  .ai li{margin:2px 0;font-size:13px}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead th{text-align:right;font-size:11.5px;color:var(--muted);font-weight:700;padding:10px 10px;border-bottom:1px solid var(--line);
+    white-space:nowrap;position:sticky;top:54px;background:#fbfcfe}
+  thead th.l{text-align:left}
+  tbody td{padding:11px 10px;border-bottom:1px solid #f0f3f7;text-align:right;white-space:nowrap}
+  tbody td.l{text-align:left}
+  tbody tr:hover{background:#fafbfd}
+  .name{font-weight:700}
+  .name .gen{display:block;font-size:11.5px;color:var(--muted);font-weight:500}
+  .b{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;margin-left:5px;vertical-align:middle}
+  .b.psy{background:var(--psy-soft);color:var(--psy)}
+  .b.vol{background:var(--vol-soft);color:var(--vol)}
+  .qty{width:74px;text-align:right;font-weight:700;font-size:13.5px;border:1px solid var(--line);border-radius:8px;
+    padding:6px 8px;font-family:inherit;color:var(--ink)}
+  .qty:focus{outline:2px solid var(--brand);outline-offset:0;border-color:var(--brand)}
+  tr.edited{background:var(--edit) !important}
+  tr.edited .qty{border-color:var(--warn);background:#fffdf5}
+  .safety{width:64px;text-align:right;font-weight:600;font-size:13px;border:1px solid var(--line);border-radius:8px;
+    padding:5px 7px;font-family:inherit;color:var(--ink);background:#fbfcfe}
+  .safety:focus{outline:2px solid var(--brand);outline-offset:0;border-color:var(--brand)}
+  .safety.custom{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-dk)}
+  .b.rsv{background:#e6f7f4;color:#0d9488}
+  tr.added{background:#f3f9ff}
+  tr.added:hover{background:#ecf4ff}
+  .rm{border:1px solid var(--line);background:#fff;color:var(--danger);font-size:11.5px;font-weight:700;
+    padding:5px 9px;border-radius:8px;cursor:pointer}
+  .rm:hover{background:#fde8e8;border-color:#f3b4b4}
+  .memo{width:110px;border:1px dashed var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12.5px;color:var(--muted)}
+  .rop-help{cursor:help;border-bottom:1px dotted var(--muted)}
+  /* 예약·직접 추가 */
+  .addwrap{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px}
+  .btn.add{background:#fff;border:1.5px dashed var(--brand);color:var(--brand-dk);font-size:13.5px;padding:9px 15px}
+  .btn.add:hover{background:var(--brand-soft)}
+  .btn.sm{padding:8px 14px;font-size:13px}
+  .addform{display:none;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;background:#f7faff;border:1px solid #dce6fb;
+    border-radius:12px;padding:12px 14px}
+  .addform.on{display:flex}
+  .addform select,.addform input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13.5px}
+  .addform select{min-width:190px}
+  .addform #addQty{width:120px;text-align:right}
+  .addform #addMemo{flex:1;min-width:200px}
+  .addhint{font-size:12.5px;color:var(--muted);margin-top:10px}
+  /* 제조사 전환·듀얼코드 */
+  .b.trn{background:#e0edff;color:#1a5fd0}
+  .b.tro{background:#eef1f5;color:#64748b}
+  .b.dual{background:#f1e9ff;color:#7c3aed}
+  tr.trans-old{background:#f6f7f9}
+  tr.trans-old .qty{opacity:.55}
+  tr.trans-new{background:#f3f9ff}
+  tr.cana-warn{background:#fff7ec}
+  .gen .warn{color:var(--warn);font-weight:700}
+  .gen .urgent{color:var(--danger);font-weight:800}
+  .gen .ok{color:var(--ok);font-weight:700}
+  .tform label{display:block;font-size:12.5px;color:var(--muted);margin:11px 0 4px;font-weight:600}
+  .tform input[type=text],.tform input[type=number],.tform select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13.5px;color:var(--ink)}
+  .tform .modes{display:flex;gap:8px}
+  .tform .modes label{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 11px;margin:0;cursor:pointer;display:flex;gap:7px;align-items:flex-start;font-size:13px}
+  .tform .modes input{margin-top:2px;flex:none}
+  .tform .row2{display:flex;gap:10px}
+  .tform .row2>div{flex:1}
+  .tcheck{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:13.5px}
+  .tcheck input{flex:none}
+  /* 재고·유효기간 */
+  .invsum{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
+  .invsum .cell{background:#fff;padding:13px 14px}
+  .invsum .k{font-size:11.5px;color:var(--muted)}
+  .invsum .v{font-size:18px;font-weight:800;margin-top:3px;letter-spacing:-.4px}
+  .invsum .v.danger{color:var(--danger)} .invsum .v.warn{color:var(--warn)} .invsum .v.blue{color:var(--brand-dk)}
+  .st2{font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;white-space:nowrap}
+  .st2.ok{background:var(--ok-soft);color:var(--ok)}
+  .st2.warn{background:var(--warn-soft);color:var(--warn)}
+  .st2.danger{background:#fde8e8;color:var(--danger)}
+  .dday{font-weight:700;font-size:12px} .dday.soon{color:var(--warn)} .dday.over{color:var(--danger)}
+  .act-btn{border:1px solid var(--brand);background:#fff;color:var(--brand-dk);font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  .act-btn:hover{background:var(--brand-soft)}
+  .act-btn.danger{border-color:var(--danger);color:var(--danger)} .act-btn.danger:hover{background:#fde8e8}
+  .invbanner{display:flex;gap:10px;align-items:center;background:var(--warn-soft);border:1px solid #f3d9a8;border-radius:12px;padding:11px 14px;margin-bottom:16px;cursor:pointer}
+  .invbanner .i{width:28px;height:28px;border-radius:8px;background:var(--warn);color:#fff;display:grid;place-items:center;font-weight:900;flex:none}
+  .invbanner .t{font-size:13px;flex:1}
+  .invbanner .go{font-size:12.5px;font-weight:700;color:var(--brand-dk);white-space:nowrap}
+  .judge{background:#f7faff;border:1px solid #dce6fb;border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13.5px}
+  .judge .ln{display:flex;justify-content:space-between;gap:10px;padding:4px 0}
+  .judge .ln b{font-weight:800;text-align:right}
+  .judge .tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px}
+
+  /* action bar */
+  .bar{display:flex;align-items:center;gap:10px;margin-top:18px}
+  .bar .spacer{flex:1}
+  .btn{border:0;border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer;transition:.15s}
+  .btn.primary{background:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-dk)}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+  .btn.ghost:hover{background:#f7f9fc}
+  .note{font-size:12.5px;color:var(--muted)}
+
+  /* modal */
+  .ov{position:fixed;inset:0;background:rgba(16,24,40,.45);display:none;place-items:center;z-index:100;padding:20px}
+  .ov.on{display:grid}
+  .modal{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal h3{margin:0 0 6px;font-size:18px}
+  .modal p{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+  .modal .row{display:flex;justify-content:space-between;padding:7px 0;font-size:14px;border-bottom:1px solid #f0f3f7}
+  .modal .row b{font-weight:800}
+  .modal .acts{display:flex;gap:10px;margin-top:18px}
+  .modal .acts .btn{flex:1}
+
+  /* success / timeline */
+  .center{text-align:center;padding:30px 20px 10px}
+  .check{width:64px;height:64px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;
+    margin:0 auto 14px;font-size:34px}
+  .center h2{margin:0 0 4px;font-size:21px}
+  .center .ordid{font-family:ui-monospace,Menlo,monospace;background:#f1f5f9;padding:3px 10px;border-radius:7px;font-size:13px;color:#334155}
+
+  .timeline{padding:8px 4px}
+  .step{display:flex;gap:14px;padding:2px 0}
+  .step .rail{display:flex;flex-direction:column;align-items:center}
+  .step .node{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;flex:none;
+    background:#eef1f5;color:#94a3b8;border:2px solid #eef1f5}
+  .step .line{width:2px;flex:1;background:#e6eaef;margin:2px 0}
+  .step:last-child .line{display:none}
+  .step .body{padding-bottom:18px;flex:1}
+  .step .ttl{font-weight:700;font-size:14px}
+  .step .ts{font-size:12px;color:var(--muted);margin-top:1px}
+  .step.done .node{background:var(--ok);border-color:var(--ok);color:#fff}
+  .step.now .node{background:var(--brand);border-color:var(--brand-soft);color:#fff;box-shadow:0 0 0 4px var(--brand-soft)}
+  .step.now .ttl{color:var(--brand-dk)}
+  .step.todo .ttl{color:var(--muted)}
+
+  .pill{display:inline-block;font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px}
+  .pill.blue{background:var(--brand-soft);color:var(--brand-dk)}
+  .pill.green{background:var(--ok-soft);color:var(--ok)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn)}
+
+  .kakao{display:flex;gap:10px;align-items:center;background:#fef9e7;border:1px solid #f7e9b0;border-radius:12px;padding:12px 14px;margin-top:16px}
+  .kakao .i{width:30px;height:30px;border-radius:8px;background:#fae100;color:#3a1d1d;display:grid;place-items:center;font-weight:900;flex:none}
+  .kakao .t{font-size:13px}
+
+  /* tracking header grid */
+  .thead{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin:14px 0 18px}
+  .thead .c{background:#fff;padding:12px 14px}
+  .thead .k{font-size:11.5px;color:var(--muted)}
+  .thead .v{font-weight:800;font-size:15px;margin-top:3px}
+
+  .courier{display:flex;gap:20px;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:13px 16px;margin:6px 0 18px}
+  .courier .k{font-size:12px;color:var(--muted)}
+  .courier .v{font-weight:700;font-size:14px;margin-top:2px}
+  .courier .v.mono{font-family:ui-monospace,Menlo,monospace}
+
+  .st{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px}
+  .st.full{background:var(--ok-soft);color:var(--ok)}
+  .st.part{background:var(--warn-soft);color:var(--warn)}
+  .st.none{background:#fde8e8;color:var(--danger)}
+
+  .sectitle{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px}
+  .footnote{font-size:11.5px;color:var(--muted);margin-top:24px;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="demonav">
+  <div class="inner">
+    <div class="logo">리가메디 WOS <small>Web Order System</small></div>
+    <span class="badge-demo">PROTOTYPE · 목업데이터</span>
+    <div class="tabs">
+      <button data-go="s2" class="on">① 주문 제안</button>
+      <button data-go="s3">② 승인 완료</button>
+      <button data-go="s4">③ 진행 추적</button>
+      <button data-go="s5">④ 재고·유효기간</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ============ SCREEN 2 : 주문 제안 ============ -->
+<section id="s2" class="screen on">
+  <h1>주문 제안</h1>
+  <div class="sub">경희채움정신과 · 기준일 2026-06-15 (월) · AI 에이전트가 안전재고 공식으로 발주량을 제안했습니다.</div>
+
+  <div class="summary">
+    <div class="cell"><div class="k">기준일</div><div class="v">06/15<small>월</small></div></div>
+    <div class="cell"><div class="k">발주 주기</div><div class="v">주 2회<small>월·목</small></div></div>
+    <div class="cell"><div class="k">발주 예정 종수</div><div class="v" id="sumKinds">9<small>종</small></div></div>
+    <div class="cell"><div class="k">예상 금액</div><div class="v" id="sumAmt">₩0</div></div>
+  </div>
+
+  <div class="ai">
+    <div class="dot">✦</div>
+    <div class="t">
+      <b>AI 에이전트 조정 근거</b> — 최근 4주 사용량과 일정을 반영해 제안량을 조정했습니다.
+      <ul>
+        <li><b>+1일 보장</b> · 6/19(금) 임시공휴일 감지 → 리드타임 보정으로 전 품목 보장기간 +1일</li>
+        <li><b>+18%</b> · <b>졸피뎀정</b> 최근 2주 처방 증가 추세 → 제안량 상향</li>
+        <li><b>변동 주의</b> · <b>멜라토닌서방정</b> 사용량 표준편차가 평균의 38% → '변동큼' 표시</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="invbanner" data-go="s5" id="invBanner" style="display:none"></div>
+
+  <div class="card pad">
+    <table>
+      <thead>
+        <tr>
+          <th class="l">약품명</th>
+          <th>현재고</th>
+          <th>안전재고 <span style="color:var(--brand)">✎</span></th>
+          <th>일평균</th>
+          <th><span class="rop-help" title="ROP = (일평균사용량 × 리드타임) + 안전재고">ROP</span></th>
+          <th>제안 발주량</th>
+          <th>수정 입력</th>
+          <th class="l">메모</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+
+    <div class="addwrap">
+      <button class="btn add" id="addToggle" onclick="toggleAddForm()">＋ 추가 발주 직접 입력</button>
+      <button class="btn add" onclick="openTrans()" style="margin-left:8px">⇄ 제조사 전환·듀얼코드</button>
+      <div class="addform" id="addForm">
+        <select id="addSel"></select>
+        <input id="addQty" type="number" min="0" step="10" placeholder="수량(정)">
+        <input id="addMemo" type="text" placeholder="사유 (선택) · 예: 환절기 불면 처방 증가 대비">
+        <button class="btn primary sm" onclick="addReservation()">추가</button>
+        <button class="btn ghost sm" onclick="toggleAddForm(false)">취소</button>
+      </div>
+      <div class="addhint">AI 제안은 <b>과거 사용량</b> 기반입니다. 발주 권한자(약국장 등)가 <b>예측한 추가 수요</b>는 여기서 직접 넣으세요.</div>
+    </div>
+
+    <div class="bar">
+      <span class="note">※ 안전재고(✎)와 발주량을 직접 수정할 수 있습니다. 변경하면 즉시 재계산·표시됩니다.</span>
+      <span class="spacer"></span>
+      <button class="btn ghost" onclick="toast('임시 저장되었습니다. 나중에 이어서 검토할 수 있습니다.')">임시 저장</button>
+      <button class="btn primary" onclick="openConfirm()">검토 후 승인 →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN 3 : 승인 완료 ============ -->
+<section id="s3" class="screen">
+  <div class="card">
+    <div class="center">
+      <div class="check">✓</div>
+      <h2>주문이 전달되었습니다</h2>
+      <div class="sub" style="margin:6px 0 0">주문번호 <span class="ordid">ORD-20260615-0042</span></div>
+    </div>
+
+    <div class="pad" style="padding-top:6px">
+      <p class="sectitle">진행 단계</p>
+      <div class="timeline">
+        <div class="step done"><div class="rail"><div class="node">✓</div><div class="line"></div></div>
+          <div class="body"><div class="ttl">병원 승인</div><div class="ts">2026-06-15 14:22 · 김약사</div></div></div>
+        <div class="step done"><div class="rail"><div class="node">✓</div><div class="line"></div></div>
+          <div class="body"><div class="ttl">WOS 등록</div><div class="ts">2026-06-15 14:22 · 주문번호 생성 완료</div></div></div>
+        <div class="step now"><div class="rail"><div class="node">3</div><div class="line"></div></div>
+          <div class="body"><div class="ttl">신성아트컴 전송</div><div class="ts">전송 중… CSV 자동 생성 후 발주 접수</div></div></div>
+        <div class="step todo"><div class="rail"><div class="node">4</div><div class="line"></div></div>
+          <div class="body"><div class="ttl">출고 준비</div><div class="ts">예정</div></div></div>
+        <div class="step todo"><div class="rail"><div class="node">5</div><div class="line"></div></div>
+          <div class="body"><div class="ttl">택배 발송</div><div class="ts">예정</div></div></div>
+      </div>
+
+      <p class="sectitle" style="margin-top:18px">주문 요약</p>
+      <div class="summary" style="grid-template-columns:repeat(5,1fr);margin-bottom:0">
+        <div class="cell"><div class="k">품목 수</div><div class="v"><span id="s3Kinds">9</span><small>종</small></div></div>
+        <div class="cell"><div class="k">총 수량</div><div class="v"><span id="s3Qty">820</span><small>정</small></div></div>
+        <div class="cell"><div class="k">총 금액</div><div class="v" id="s3Amt">₩0</div></div>
+        <div class="cell"><div class="k">향정 포함</div><div class="v"><span id="s3Psy">4</span><small>종</small></div></div>
+        <div class="cell"><div class="k">알림 채널</div><div class="v" style="font-size:15px">카카오톡</div></div>
+      </div>
+
+      <div class="kakao">
+        <div class="i">talk</div>
+        <div class="t">진행 단계는 담당 약사님 <b>카카오톡</b>으로 자동 알림됩니다. (접수 → 출고 → 배송 → 부분출고 시)</div>
+      </div>
+
+      <div class="bar">
+        <span class="spacer"></span>
+        <button class="btn primary" data-go="s4">진행 현황 보기 →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN 4 : 진행 추적 ============ -->
+<section id="s4" class="screen">
+  <h1>진행 추적 <span class="pill blue" style="vertical-align:middle">배송 중</span></h1>
+  <div class="sub">주문번호 ORD-20260615-0042 · 주문일시 2026-06-15 14:22</div>
+
+  <div class="thead">
+    <div class="c"><div class="k">주문번호</div><div class="v" style="font-size:13px;font-family:ui-monospace,Menlo,monospace">ORD-…0042</div></div>
+    <div class="c"><div class="k">품목 수</div><div class="v"><span id="s4Kinds">9</span> 종</div></div>
+    <div class="c"><div class="k">총 금액</div><div class="v" id="s4Amt">₩0</div></div>
+    <div class="c"><div class="k">현재 상태</div><div class="v"><span class="pill blue">배송 중</span></div></div>
+    <div class="c"><div class="k">도착 예정</div><div class="v">06/16 09~12시</div></div>
+  </div>
+
+  <div class="card pad">
+    <p class="sectitle">진행 타임라인</p>
+    <div class="timeline">
+      <div class="step done"><div class="rail"><div class="node">✓</div><div class="line"></div></div>
+        <div class="body"><div class="ttl">주문 접수</div><div class="ts">06-15 14:22 · 신성아트컴 접수 완료</div></div></div>
+      <div class="step done"><div class="rail"><div class="node">✓</div><div class="line"></div></div>
+        <div class="body"><div class="ttl">출고 준비</div><div class="ts">06-15 16:40</div></div></div>
+      <div class="step done"><div class="rail"><div class="node">✓</div><div class="line"></div></div>
+        <div class="body"><div class="ttl">출고 완료</div><div class="ts">06-15 18:05 · 일부 품목 부분 출고</div></div></div>
+      <div class="step now"><div class="rail"><div class="node">4</div><div class="line"></div></div>
+        <div class="body"><div class="ttl">배송 중</div><div class="ts">06-15 19:10 · 택배 출발</div></div></div>
+      <div class="step todo"><div class="rail"><div class="node">5</div><div class="line"></div></div>
+        <div class="body"><div class="ttl">도착 예정</div><div class="ts">06-16 09~12시</div></div></div>
+    </div>
+
+    <p class="sectitle" style="margin-top:14px">택배 정보</p>
+    <div class="courier">
+      <div><div class="k">택배사</div><div class="v">CJ대한통운</div></div>
+      <div><div class="k">송장번호</div><div class="v mono">6391-0042-7785</div></div>
+      <div><div class="k">배차</div><div class="v">새벽 배송</div></div>
+    </div>
+
+    <div class="kakao" style="margin-top:0;margin-bottom:18px;background:var(--warn-soft);border-color:#f3d9a8">
+      <div class="i" style="background:var(--warn);color:#fff">!</div>
+      <div class="t" id="partialMsg"><b>부분 출고 발생</b> — 약사 우선 확인이 필요합니다.</div>
+    </div>
+
+    <p class="sectitle">출고 명세</p>
+    <table>
+      <thead>
+        <tr><th class="l">약품명</th><th>주문 수량</th><th>출고 수량</th><th class="l" style="padding-left:16px">상태</th></tr>
+      </thead>
+      <tbody id="shipRows"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ SCREEN 5 : 재고·유효기간 ============ -->
+<section id="s5" class="screen">
+  <h1>재고 · 유효기간 관리</h1>
+  <div class="sub">경희채움정신과 · 기준일 2026-06-15 · 이지스(사용) + 신성아트컴(입고·유효기간) 자동 집계 · 완통/개봉은 반품·폐기 판단 시에만 실사</div>
+
+  <div class="invsum" id="invSum"></div>
+
+  <div class="card pad">
+    <table>
+      <thead>
+        <tr>
+          <th class="l">약품명</th>
+          <th>현재고</th>
+          <th class="l">lot</th>
+          <th class="l">유효기간</th>
+          <th>일평균</th>
+          <th class="l">소진 예측</th>
+          <th class="l">상태</th>
+          <th class="l">권장 액션</th>
+        </tr>
+      </thead>
+      <tbody id="invRows"></tbody>
+    </table>
+    <div class="addhint" style="border-top:1px dashed var(--line);padding-top:12px;margin-top:6px">
+      ※ 완통/개봉 수량은 평소 추적하지 않고 <b>반품·폐기를 판단할 때만 실사 입력</b>합니다(길①). FEFO '이 통부터' 지정은 이지스가 수행하므로 중복하지 않습니다. 향정 유효 경과분은 완통/개봉 불문 보건소 폐기 대상입니다.
+    </div>
+  </div>
+</section>
+
+<div class="footnote">리가메디 WOS 화면 프로토타입 · 목업 데이터 · 2026-06-15 · 실제 데이터 연동 전 UX 합의용</div>
+</div>
+
+<!-- confirm modal -->
+<div class="ov" id="ov">
+  <div class="modal">
+    <h3>발주 승인</h3>
+    <p>아래 내용으로 신성아트컴에 발주가 자동 전송됩니다. 승인하시겠습니까?</p>
+    <div class="row"><span>발주 품목</span><b id="mKinds">9 종</b></div>
+    <div class="row"><span>총 수량</span><b id="mQty">820 정</b></div>
+    <div class="row"><span>예상 금액</span><b id="mAmt">₩1,861,400</b></div>
+    <div class="row"><span>향정 포함</span><b>4 종 (별도 관리대장 기록)</b></div>
+    <div class="acts">
+      <button class="btn ghost" onclick="closeConfirm()">취소</button>
+      <button class="btn primary" onclick="approve()">승인하고 전송</button>
+    </div>
+  </div>
+</div>
+
+<!-- 제조사 전환·듀얼코드 모달 -->
+<div class="ov" id="ovTrans">
+  <div class="modal" style="max-width:480px">
+    <h3>제조사 전환 · 듀얼코드 설정</h3>
+    <p>같은 성분·규격을 다른 제조사 제품으로 전환하거나, 두 제조사를 상시 병행 관리합니다. 청구코드는 별도(듀얼코드)로 관리됩니다.</p>
+    <div class="tform">
+      <label>대상 품목 (구제품)</label>
+      <select id="tTarget" onchange="syncTransDefaults()"></select>
+      <label>모드</label>
+      <div class="modes">
+        <label><input type="radio" name="tmode" value="switch" checked onchange="syncTransMode()"><span><b>일시 전환</b><br><small style="color:var(--muted)">구제품 소진 전 신제품으로 무중단 교체</small></span></label>
+        <label><input type="radio" name="tmode" value="dual" onchange="syncTransMode()"><span><b>상시 듀얼코드</b><br><small style="color:var(--muted)">두 제조사 병행 발주</small></span></label>
+      </div>
+      <label>신제품명 (제조사 포함)</label>
+      <input id="tNewName" type="text" placeholder="예: 명인제약 알프라졸람정 0.25mg">
+      <div class="row2">
+        <div><label>신제품 단가(원/정)</label><input id="tNewUnit" type="number" min="0"></div>
+        <div><label>신제품 리드타임(일)</label><input id="tLead" type="number" min="0" value="2"></div>
+      </div>
+      <div class="tcheck"><input type="checkbox" id="tCanReq" checked onchange="syncTransMode()"><label style="margin:0">자동포장기(ATDPS) 캐니스터 등록 품목</label></div>
+      <div class="tcheck" id="tCanReadyWrap"><input type="checkbox" id="tCanReady"><label style="margin:0">신제품용 캐니스터 준비(재세팅) 완료</label></div>
+      <div class="row2" id="tBufWrap"><div><label>연속처방 보장 버퍼(일)</label><input id="tBuf" type="number" min="0" value="3"></div><div></div></div>
+    </div>
+    <div class="acts">
+      <button class="btn ghost" onclick="closeTrans()">취소</button>
+      <button class="btn primary" onclick="applyTrans()">적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- 완통/개봉 실사 모달 (길①) -->
+<div class="ov" id="ovStock">
+  <div class="modal" style="max-width:440px">
+    <h3 id="stTitle">완통/개봉 실사</h3>
+    <p id="stDesc"></p>
+    <div class="tform">
+      <div class="row2">
+        <div><label>완통(미개봉) 통수</label><input id="stWhole" type="number" min="0"></div>
+        <div><label>개봉 잔여(정)</label><input id="stOpen" type="number" min="0"></div>
+      </div>
+    </div>
+    <div class="judge" id="stJudge"></div>
+    <div class="acts">
+      <button class="btn ghost" onclick="closeStock()">취소</button>
+      <button class="btn primary" id="stConfirm" onclick="confirmStock()">확정</button>
+    </div>
+  </div>
+</div>
+
+<!-- toast -->
+<div id="toast" style="position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#1a2433;color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;
+  opacity:0;transition:.25s;z-index:200;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.25)"></div>
+
+<script>
+// ---------- mock data (경희채움정신과) ----------
+// 향정=향정신성의약품, vol=변동큼(σ>평균30%)
+const MASTER = [
+  {name:"알프라졸람정 0.25mg", gen:"자낙스 · 디오피정", psy:true,  vol:true,  stock:140, safety:120, avg:42, lead:2, unit:35},
+  {name:"클로나제팜정 0.5mg",  gen:"리보트릴",        psy:true,  vol:false, stock:90,  safety:80,  avg:26, lead:2, unit:48},
+  {name:"졸피뎀정 10mg",       gen:"스틸녹스CR",      psy:true,  vol:true,  stock:60,  safety:150, avg:55, lead:2, unit:190, ai:18},
+  {name:"로라제팜정 1mg",      gen:"아티반",          psy:true,  vol:false, stock:110, safety:90,  avg:30, lead:2, unit:42},
+  {name:"에스시탈로프람정 10mg",gen:"렉사프로",        psy:false, vol:false, stock:200, safety:160, avg:48, lead:2, unit:260},
+  {name:"설트랄린정 50mg",     gen:"졸로푸트",        psy:false, vol:false, stock:170, safety:140, avg:40, lead:2, unit:230},
+  {name:"쿠에티아핀정 25mg",   gen:"쎄로켈",          psy:false, vol:false, stock:130, safety:110, avg:36, lead:2, unit:155},
+  {name:"아리피프라졸정 10mg", gen:"아빌리파이",      psy:false, vol:false, stock:80,  safety:70,  avg:22, lead:2, unit:520},
+  {name:"멜라토닌서방정 2mg",  gen:"서카딘",          psy:false, vol:true,  stock:50,  safety:95,  avg:33, lead:2, unit:410},
+];
+// 안전재고 수정 흔적을 남기려 safety0(원래값) 보존. 작업본 DRUGS는 추가/수정 자유.
+const DRUGS = MASTER.map(d=>({...d, safety0:d.safety}));
+const won = n => "₩"+n.toLocaleString("ko-KR");
+const ceilPack = n => Math.max(0, Math.ceil(n/10)*10); // 10정 포장 가정
+
+// ---------- Screen 2 render ----------
+const rowsEl = document.getElementById("rows");
+
+function computeRow(d){                            // ROP 공식 + AI 조정 → 제안발주량
+  if(d.added){ d._rop=null; return; }              // 직접추가 행은 계산 없음
+  d._rop = d.avg*d.lead + d.safety;
+  if(d.transition){ d._propose=0; return; }        // 전환 구제품: 발주 중단(잔여 소진)
+  d._propose = ceilPack(d._rop - d.stock + (d.ai||0));
+}
+function rowHTML(d,i){
+  let badges = (d.psy?'<span class="b psy">향정</span>':'')
+             + (d.vol?'<span class="b vol">변동큼</span>':'')
+             + (d.added?'<span class="b rsv">추가</span>':'');
+  if(d.added){
+    return `<td class="l"><span class="name">${d.name}${badges}<span class="gen">권한자 직접 추가${d.memo?' · '+d.memo:''}</span></span></td>
+      <td>—</td><td>—</td><td>—</td><td class="rop">—</td><td class="propose"><b>—</b></td>
+      <td><input class="qty" type="number" min="0" step="10" value="${d._qty}" data-i="${i}"></td>
+      <td class="l"><button class="rm" data-i="${i}">✕ 삭제</button></td>`;
+  }
+  // 제조사 전환·듀얼코드 배지 + 안내문구
+  let gen = d.gen||'';
+  if(d.transition){
+    badges += '<span class="b tro">전환·구</span>';
+    gen = `발주 중단 · 잔여 ${d.stock}정, 예상 소진 ${fmtMD(d.transition.soldOut)} (소진 전 신제품 준비 필요)`;
+  } else if(d.dual){
+    badges += '<span class="b dual">듀얼코드</span>';
+  } else if(d.transNew){
+    badges += d.mode==='switch' ? '<span class="b trn">전환·신</span>' : '<span class="b trn">듀얼·신</span>';
+    const parts=[`${d.lineFrom} ${d.mode==='switch'?'대체':'병행'}`];
+    if(d.mode==='switch'){
+      parts.push(d.dueOrder<BASE ? '<span class="urgent">🔴 발주 마감 경과 — 즉시 발주</span>'
+                                 : `신제품 발주 마감 ${fmtMD(d.dueOrder)}`);
+    }
+    if(d.canReq) parts.push(d.canReady
+      ? '<span class="ok">캐니스터 ✔ 준비완료</span>'
+      : `<span class="warn">캐니스터 ⚠ 미준비 — 소진(${fmtMD(d.soldOut||BASE)}) 전 준비 안 되면 연속 처방 중단 위험</span>`);
+    gen = parts.join(' · ');
+  }
+  const cust = (!d.transNew && d.safety!==d.safety0) ? ' custom' : '';
+  return `<td class="l"><span class="name">${d.name}${badges}<span class="gen">${gen}</span></span></td>
+    <td>${d.stock}</td>
+    <td><input class="safety${cust}" type="number" min="0" step="10" value="${d.safety}" data-i="${i}"></td>
+    <td>${d.avg}<small style="color:var(--muted)">/일</small></td>
+    <td class="rop">${d._rop}</td>
+    <td class="propose"><b>${d._propose}</b></td>
+    <td><input class="qty" type="number" min="0" step="10" value="${d._qty}" data-i="${i}"></td>
+    <td class="l"><input class="memo" placeholder="메모" ${d.psy?'value="향정 대장"':''}></td>`;
+}
+function renderRows(){
+  rowsEl.innerHTML="";
+  DRUGS.forEach((d,i)=>{
+    computeRow(d);
+    if(!('_qty' in d)) d._qty=d._propose;          // 최초엔 제안값으로 채움
+    const tr=document.createElement("tr");
+    if(d.added) tr.classList.add("added");
+    if(d.transition||d.dual) tr.classList.add("trans-old");
+    if(d.transNew) tr.classList.add("trans-new");
+    if(d.transNew && d.canReq && !d.canReady) tr.classList.add("cana-warn");
+    tr.innerHTML=rowHTML(d,i);
+    rowsEl.appendChild(tr);
+  });
+}
+function recalc(){
+  let amt=0, kinds=0, qtyTot=0;
+  document.querySelectorAll("#rows .qty").forEach(inp=>{
+    const d=DRUGS[inp.dataset.i]; const q=+inp.value||0;
+    d._qty=q; amt+=q*d.unit; qtyTot+=q; if(q>0)kinds++;
+    if(!d.added) inp.closest("tr").classList.toggle("edited", q!==d._propose);
+  });
+  document.getElementById("sumAmt").textContent = won(amt);
+  document.getElementById("sumKinds").firstChild.textContent = kinds;
+  return {amt,kinds,qtyTot};
+}
+
+// 안전재고 수정 → ROP·제안발주량·입력란 즉시 재계산 / 발주량 수정 → 총액만 갱신
+rowsEl.addEventListener("input", e=>{
+  const t=e.target;
+  if(t.classList.contains("safety")){
+    const d=DRUGS[t.dataset.i]; d.safety=+t.value||0;
+    computeRow(d); d._qty=d._propose;              // 기준이 바뀌었으니 발주량도 새 제안값으로
+    const tr=t.closest("tr");
+    tr.querySelector(".rop").textContent=d._rop;
+    tr.querySelector(".propose").innerHTML="<b>"+d._propose+"</b>";
+    tr.querySelector(".qty").value=d._propose;
+    t.classList.toggle("custom", d.safety!==d.safety0);
+    tr.classList.remove("edited");
+    recalc();                                      // 발주량이 바뀌었으니 총액도 갱신
+  }
+  if(t.classList.contains("qty")) recalc();
+});
+// 직접추가 행 삭제
+rowsEl.addEventListener("click", e=>{
+  if(e.target.classList.contains("rm")){
+    DRUGS.splice(+e.target.dataset.i,1); renderRows(); recalc();
+  }
+});
+
+// ---------- 추가 발주 직접 입력 (권한자 수요 예측분) ----------
+const addSel=document.getElementById("addSel");
+MASTER.forEach((d,i)=>{ const o=document.createElement("option"); o.value=i;
+  o.textContent=d.name+(d.psy?" (향정)":""); addSel.appendChild(o); });
+function toggleAddForm(show){
+  const f=document.getElementById("addForm");
+  const on = show===undefined ? !f.classList.contains("on") : show;
+  f.classList.toggle("on", on);
+}
+function addReservation(){
+  const qty=+document.getElementById("addQty").value||0;
+  if(qty<=0){ toast("수량을 입력해 주세요."); return; }
+  const src=MASTER[+addSel.value];
+  const memo=document.getElementById("addMemo").value.trim();
+  DRUGS.push({added:true, name:src.name, psy:src.psy, unit:src.unit, memo, _qty:qty, _propose:qty});
+  renderRows(); recalc();
+  document.getElementById("addQty").value=""; document.getElementById("addMemo").value="";
+  toggleAddForm(false);
+  toast("추가 발주 품목이 반영되었습니다.");
+}
+
+// ---------- 제조사 전환 · 듀얼코드 ----------
+const BASE = new Date(2026,5,15);                  // 기준일 2026-06-15
+const addDays = (dt,n)=>{ const x=new Date(dt); x.setDate(x.getDate()+n); return x; };
+const fmtMD = dt=>(dt.getMonth()+1)+"/"+dt.getDate();
+
+function openTrans(){
+  const sel=document.getElementById("tTarget"); sel.innerHTML="";
+  DRUGS.forEach((d,i)=>{ if(d.added||d.transNew||d.transition||d.dual) return;   // 일반 활성 품목만
+    const o=document.createElement("option"); o.value=i; o.textContent=d.name; sel.appendChild(o); });
+  syncTransDefaults(); syncTransMode();
+  document.getElementById("ovTrans").classList.add("on");
+}
+function closeTrans(){ document.getElementById("ovTrans").classList.remove("on"); }
+function syncTransDefaults(){
+  const d=DRUGS[+document.getElementById("tTarget").value]; if(!d) return;
+  document.getElementById("tNewUnit").value=d.unit;
+}
+function syncTransMode(){
+  const dual=document.querySelector("input[name=tmode]:checked").value==="dual";
+  document.getElementById("tBufWrap").style.display=dual?"none":"flex";
+  const canReq=document.getElementById("tCanReq").checked;
+  document.getElementById("tCanReadyWrap").style.display=canReq?"flex":"none";
+}
+function applyTrans(){
+  const i=+document.getElementById("tTarget").value, d=DRUGS[i];
+  const mode=document.querySelector("input[name=tmode]:checked").value;
+  const newName=document.getElementById("tNewName").value.trim() || (mode==="dual"?"(타 제조사) ":"(신제조사) ")+d.name;
+  const newUnit=+document.getElementById("tNewUnit").value||d.unit;
+  const lead=+document.getElementById("tLead").value||2;
+  const canReq=document.getElementById("tCanReq").checked;
+  const canReady=canReq?document.getElementById("tCanReady").checked:false;
+  const buf=+document.getElementById("tBuf").value||0;
+
+  // 신제품: 같은 라인 수요(avg·safety) 승계, 현재고 0부터 시작
+  const newObj={ transNew:true, mode, name:newName, psy:d.psy, vol:false,
+    stock:0, safety:d.safety, safety0:d.safety, avg:d.avg, lead, unit:newUnit,
+    lineFrom:d.name, canReq, canReady };
+
+  if(mode==="switch"){
+    const soldDays=Math.floor(d.stock/d.avg);        // 구제품 예상 소진
+    const soldOut=addDays(BASE,soldDays);
+    const dueOrder=addDays(soldOut,-(lead+buf));      // 무중단: 소진 - (리드타임+버퍼) 전 발주
+    d.transition={ mode:"switch", soldOut, newName };
+    d._propose=0; d._qty=0;                           // 구제품 발주 중단
+    newObj.soldOut=soldOut; newObj.dueOrder=dueOrder;
+    DRUGS.splice(i+1,0,newObj);                        // 구제품 바로 뒤에 신제품
+    toast("제조사 전환이 설정되었습니다. (무중단 전환)");
+  } else {
+    d.dual=true;                                      // 구제품 발주 유지
+    DRUGS.push(newObj);
+    toast("듀얼코드 품목이 추가되었습니다.");
+  }
+  renderRows(); recalc(); closeTrans();
+}
+document.getElementById("ovTrans").addEventListener("click",e=>{ if(e.target.id==="ovTrans") closeTrans(); });
+
+// ---------- 재고·유효기간 관리 ----------
+// 데이터: 이지스(사용)+신성아트컴(입고 lot·유효기간) 자동 집계 가정. 완통/개봉은 길① 실사.
+const INV=[
+ {name:"알프라졸람정 0.25mg", psy:true,  stock:2200, avg:42, pack:200, lot:"AX2403", expiry:"2026-07-31", shipDate:"2026-03-05", unit:35},
+ {name:"클로나제팜정 0.5mg",  psy:true,  stock:900,  avg:26, pack:100, lot:"CL2312", expiry:"2027-03-31", shipDate:"2026-05-01", unit:48},
+ {name:"졸피뎀정 10mg",       psy:true,  stock:300,  avg:55, pack:200, lot:"ZP2401", expiry:"2026-05-30", shipDate:"2025-12-10", unit:190},
+ {name:"로라제팜정 1mg",      psy:true,  stock:700,  avg:30, pack:100, lot:"LO2402", expiry:"2027-01-31", shipDate:"2026-04-20", unit:42},
+ {name:"에스시탈로프람정 10mg",psy:false, stock:3600, avg:48, pack:500, lot:"ES2401", expiry:"2026-08-20", shipDate:"2026-04-01", unit:260},
+ {name:"설트랄린정 50mg",     psy:false, stock:2400, avg:40, pack:200, lot:"SE2312", expiry:"2026-07-15", shipDate:"2026-05-20", unit:230},
+ {name:"쿠에티아핀정 25mg",   psy:false, stock:800,  avg:36, pack:200, lot:"QU2402", expiry:"2027-02-28", shipDate:"2026-05-10", unit:155},
+ {name:"아리피프라졸정 10mg", psy:false, stock:2600, avg:22, pack:100, lot:"AR2308", expiry:"2026-09-30", shipDate:"2025-02-15", unit:520},
+ {name:"멜라토닌서방정 2mg",  psy:false, stock:600,  avg:33, pack:100, lot:"ME2403", expiry:"2027-05-31", shipDate:"2026-06-01", unit:410},
+];
+const parseD = s=>{ const[y,m,dd]=s.split("-").map(Number); return new Date(y,m-1,dd); };
+const daysTo = dt=>Math.round((dt-BASE)/86400000);
+const daysFrom = dt=>Math.round((BASE-dt)/86400000);
+const shipWithin1yr = d=>daysFrom(parseD(d.shipDate))<=365;
+
+function classify(d){
+  d._dte = daysTo(parseD(d.expiry));
+  d._soldDays = Math.ceil(d.stock/d.avg);
+  d._soldOut = addDays(BASE,d._soldDays);
+  if(d._dte<0) return {key:"expired", label:"폐기 대상", cls:"danger"};
+  if(d._soldDays>d._dte) return {key:"surplus", label:"유효 내 소진불가", cls:"warn"};
+  if(d._dte<=180) return {key:"imminent", label:"유효 임박(주의)", cls:"warn"};
+  return {key:"normal", label:"정상", cls:"ok"};
+}
+function recAction(d,st){
+  if(st.key==="normal"||st.key==="imminent") return null;
+  if(st.key==="expired") return {label:d.psy?"보건소 폐기 등록":"폐기 등록", danger:true};
+  if(d.psy) return {label:"양수양도/소진 검토", danger:false};
+  return {label:shipWithin1yr(d)?"반품/소진 검토":"소진/폐기 검토", danger:false};
+}
+function renderInv(){
+  const body=document.getElementById("invRows"); body.innerHTML="";
+  let risk=0,expired=0,ret=0,trans=0,loss=0;
+  INV.forEach((d,i)=>{
+    const st=classify(d);
+    if(st.key==="expired"){ expired++; loss+=d.stock*d.unit; }
+    if(st.key==="surplus"||st.key==="imminent") risk++;
+    if(st.key==="surplus"&&!d.psy&&shipWithin1yr(d)) ret++;
+    if(st.key==="surplus"&&d.psy) trans++;
+    const rec=recAction(d,st), whole=Math.floor(d.stock/d.pack), rem=d.stock%d.pack;
+    const dd = d._dte<0 ? `<span class="dday over">경과 ${-d._dte}일</span>`
+                        : `<span class="dday ${d._dte<=180?'soon':''}">D-${d._dte}</span>`;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="l name">${d.name}${d.psy?'<span class="b psy">향정</span>':''}</td>
+      <td>${d.stock}<small style="color:var(--muted)"> 정</small><br><small style="color:var(--muted)">≈${whole}통+${rem}</small></td>
+      <td class="l" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">${d.lot}</td>
+      <td class="l">${d.expiry}<br>${dd}</td>
+      <td>${d.avg}<small style="color:var(--muted)">/일</small></td>
+      <td class="l">${fmtMD(d._soldOut)}<br><small style="color:var(--muted)">${d._soldDays}일분</small></td>
+      <td class="l"><span class="st2 ${st.cls}">${st.label}</span></td>
+      <td class="l">${rec?`<button class="act-btn ${rec.danger?'danger':''}" onclick="openStock(${i})">${rec.label}</button>`:'<span style="color:var(--muted);font-size:12px">—</span>'}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById("invSum").innerHTML=`
+    <div class="cell"><div class="k">유효 위험</div><div class="v warn">${risk}<small style="font-size:12px"> 종</small></div></div>
+    <div class="cell"><div class="k">폐기 대상</div><div class="v danger">${expired}<small style="font-size:12px"> 종</small></div></div>
+    <div class="cell"><div class="k">반품 후보(일반)</div><div class="v blue">${ret}<small style="font-size:12px"> 종</small></div></div>
+    <div class="cell"><div class="k">양수양도(향정)</div><div class="v blue">${trans}<small style="font-size:12px"> 종</small></div></div>
+    <div class="cell"><div class="k">폐기 예상 손실</div><div class="v danger">${won(loss)}</div></div>`;
+}
+function updateInvBanner(){
+  let expired=0,surplus=0;
+  INV.forEach(d=>{ const st=classify(d); if(st.key==="expired")expired++; else if(st.key==="surplus")surplus++; });
+  const n=expired+surplus, b=document.getElementById("invBanner");
+  if(n>0){ b.style.display="flex";
+    b.innerHTML=`<div class="i">!</div><div class="t"><b>재고 위험 ${n}건</b> · 폐기 대상 ${expired} · 유효 내 소진불가 ${surplus} — 발주 억제·반품·폐기 검토가 필요합니다.</div><div class="go">재고 화면 →</div>`;
+  } else b.style.display="none";
+}
+
+// 완통/개봉 실사 모달 (길①)
+let curStock=0;
+function openStock(i){
+  curStock=i; const d=INV[i], whole=Math.floor(d.stock/d.pack), rem=d.stock%d.pack;
+  document.getElementById("stTitle").textContent=d.name+" — 완통/개봉 실사";
+  document.getElementById("stDesc").innerHTML=`이론재고 <b>${d.stock}정</b> · 통당 ${d.pack}정 ≈ 약 ${whole}통 + ${rem}정. 실제 완통/개봉 수량을 확인해 주세요.`;
+  document.getElementById("stWhole").value=whole;
+  document.getElementById("stOpen").value=rem;
+  judgeStock();
+  document.getElementById("ovStock").classList.add("on");
+}
+function closeStock(){ document.getElementById("ovStock").classList.remove("on"); }
+function judgeStock(){
+  const d=INV[curStock], st=classify(d);
+  const whole=+document.getElementById("stWhole").value||0, open=+document.getElementById("stOpen").value||0;
+  const wt=whole*d.pack;
+  let html="", conf="확정";
+  if(st.key==="expired"){
+    const route=d.psy?"보건소 폐기 (입회·NIMS 보고)":"일반 의약품 폐기";
+    html=`<div class="ln"><span>유효 경과 · ${d.psy?'향정':'일반약'}</span><b class="tag" style="background:#fde8e8;color:var(--danger)">${route}</b></div>
+          <div class="ln"><span>폐기 대상</span><b>완통 ${whole}통(${wt}정) + 개봉 ${open}정 = ${wt+open}정</b></div>`;
+    conf="폐기 등록";
+  } else if(st.key==="surplus"&&d.psy){
+    html=`<div class="ln"><span>완통 · 유효 잔여</span><b class="tag" style="background:#e6f7f4;color:#0d9488">리가메디 양수양도 가능</b></div>
+          <div class="ln"><span>양수양도</span><b>${whole}통 (${wt}정)</b></div>
+          <div class="ln"><span>개봉 ${open}정</span><b>반품 불가 → 소진 우선</b></div>`;
+    conf="양수양도 요청";
+  } else if(st.key==="surplus"&&!d.psy&&shipWithin1yr(d)){
+    html=`<div class="ln"><span>완통 · 출고 1년 이내</span><b class="tag" style="background:var(--brand-soft);color:var(--brand-dk)">반품 가능</b></div>
+          <div class="ln"><span>반품</span><b>${whole}통 (${wt}정)</b></div>
+          <div class="ln"><span>개봉 ${open}정</span><b>반품 불가 → 소진 우선</b></div>`;
+    conf="반품 요청";
+  } else {
+    html=`<div class="ln"><span>출고 1년 초과</span><b class="tag" style="background:var(--warn-soft);color:var(--warn)">반품 불가</b></div>
+          <div class="ln"><span>전량 (${wt+open}정)</span><b>소진 우선 · 유효 경과 시 폐기</b></div>`;
+    conf="소진 지정";
+  }
+  document.getElementById("stJudge").innerHTML=html;
+  document.getElementById("stConfirm").textContent=conf;
+}
+function confirmStock(){ const label=document.getElementById("stConfirm").textContent; closeStock(); toast(`'${INV[curStock].name}' — ${label} 처리되었습니다.`); }
+["stWhole","stOpen"].forEach(id=>document.getElementById(id).addEventListener("input",judgeStock));
+document.getElementById("ovStock").addEventListener("click",e=>{ if(e.target.id==="ovStock") closeStock(); });
+
+renderInv(); updateInvBanner();
+
+renderRows();
+recalc();
+// 초기 1회: 직접 ②③ 탭으로 가도 숫자가 일관되도록 기본 제안량으로 채워둠
+
+
+// ---------- order snapshot → drives Screen 3 & 4 (kept consistent w/ Screen 2) ----------
+// 출고 시나리오: 대부분 정상, 졸피뎀 부분출고(75%), 아리피프라졸 미출고 — 부분출고 UX 시연용
+const SHIP_RATIO = {"졸피뎀정 10mg":0.75, "아리피프라졸정 10mg":0};
+const shipEl = document.getElementById("shipRows");
+
+function populateOrder(){
+  let amt=0, kinds=0, qtyTot=0, psy=0;
+  shipEl.innerHTML="";
+  let partialName="", partialShip=0, partialOrder=0;
+  DRUGS.forEach(d=>{
+    const order=d._qty||0;
+    if(order<=0) return;
+    amt+=order*d.unit; qtyTot+=order; kinds++; if(d.psy)psy++;
+    const ratio = (d.name in SHIP_RATIO)?SHIP_RATIO[d.name]:1;
+    const ship = ceilPack(order*ratio)>order?order:Math.round(order*ratio);
+    let st = ship===order ? '<span class="st full">정상</span>'
+          : ship===0 ? '<span class="st none">미출고</span>'
+          : '<span class="st part">부분</span>';
+    if(ship>0 && ship<order){ partialName=d.name; partialShip=ship; partialOrder=order; }
+    const badge = d.psy?'<span class="b psy">향정</span>':'';
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="l name">${d.name}${badge}</td><td>${order}</td><td>${ship}</td>
+      <td class="l" style="padding-left:16px">${st}</td>`;
+    shipEl.appendChild(tr);
+  });
+  // Screen 3 summary
+  s3Kinds.textContent=kinds; s3Qty.textContent=qtyTot.toLocaleString("ko-KR");
+  s3Amt.textContent=won(amt); s3Psy.textContent=psy;
+  // Screen 4 header
+  s4Kinds.textContent=kinds; s4Amt.textContent=won(amt);
+  // 부분출고 배너
+  if(partialName){
+    document.getElementById("partialMsg").innerHTML =
+      `<b>부분 출고 1건</b> 발생 — 약사 우선 확인이 필요합니다. (${partialName}: ${partialShip} / ${partialOrder}정 출고, 잔여분 익일 추가 출고 예정)`;
+  }
+}
+
+// ---------- navigation ----------
+function go(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on",s.id===id));
+  document.querySelectorAll(".demonav button").forEach(b=>b.classList.toggle("on",b.dataset.go===id));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+
+// ---------- confirm modal ----------
+function openConfirm(){
+  const {amt,kinds,qtyTot}=recalc();
+  mKinds.textContent=kinds+" 종"; mQty.textContent=qtyTot.toLocaleString("ko-KR")+" 정"; mAmt.textContent=won(amt);
+  document.getElementById("ov").classList.add("on");
+}
+function closeConfirm(){document.getElementById("ov").classList.remove("on");}
+function approve(){populateOrder(); closeConfirm(); go("s3"); toast("발주가 승인되어 신성아트컴으로 전송됩니다.");}
+document.getElementById("ov").addEventListener("click",e=>{if(e.target.id==="ov")closeConfirm();});
+
+// ---------- toast ----------
+let tT;
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg;
+  t.style.opacity="1"; t.style.transform="translateX(-50%) translateY(0)";
+  clearTimeout(tT); tT=setTimeout(()=>{t.style.opacity="0";t.style.transform="translateX(-50%) translateY(20px)";},2600);
+}
+
+// 초기 채움 (기본 제안량 기준)
+populateOrder();
+</script>
+</body>
+</html>
