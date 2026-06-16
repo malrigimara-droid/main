@@ -147,6 +147,8 @@
   .st2.ok{background:var(--ok-soft);color:var(--ok)}
   .st2.warn{background:var(--warn-soft);color:var(--warn)}
   .st2.danger{background:#fde8e8;color:var(--danger)}
+  .st2.info{background:#e6f0ff;color:#1a5fd0}
+  .st2.fixed{background:#eef1f5;color:#64748b}
   .dday{font-weight:700;font-size:12px} .dday.soon{color:var(--warn)} .dday.over{color:var(--danger)}
   .act-btn{border:1px solid var(--brand);background:#fff;color:var(--brand-dk);font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
   .act-btn:hover{background:var(--brand-soft)}
@@ -243,6 +245,7 @@
       <button data-go="s3">② 승인 완료</button>
       <button data-go="s4">③ 진행 추적</button>
       <button data-go="s5">④ 재고·유효기간</button>
+      <button data-go="s6">⑤ NIMS 매칭</button>
     </div>
   </div>
 </div>
@@ -436,6 +439,52 @@
     <div class="addhint" style="border-top:1px dashed var(--line);padding-top:12px;margin-top:6px">
       ※ 재고·lot·유효기간은 <b>상품(브랜드)·lot 단위로 분리</b>합니다(전환·스위칭 구간엔 같은 성분도 두 브랜드가 동시 재고 — 예: 클로나제팜 = 리보트릴 + 환인클로나제팜).
       완통/개봉 수량은 평소 추적하지 않고 <b>반품·폐기를 판단할 때만 실사 입력</b>합니다(길①). FEFO '이 통부터' 지정은 이지스가 수행하므로 중복하지 않습니다. 향정 유효 경과분은 완통/개봉 불문 보건소 폐기 대상입니다.
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN 6 : NIMS 양수↔매출 매칭 ============ -->
+<section id="s6" class="screen">
+  <h1>NIMS 양수↔매출 매칭 <span class="b psy" style="vertical-align:middle">향정 전용</span></h1>
+  <div class="sub">경희채움정신과 · 대조기간 2026-05 · 리가메디 <b>매출보고</b> ↔ 병원 <b>양수보고</b>를 NIMS 보고 前 사전 대조합니다.</div>
+
+  <div class="ai" style="background:linear-gradient(90deg,#eef9f1,#eef4ff);border-color:#cfe9d6">
+    <div class="dot" style="background:#0d9488">⇄</div>
+    <div class="t">
+      <b>NIMS를 대체하지 않습니다.</b> NIMS는 공급자·수요자 공용 국가시스템이고, WOS는 <b>양쪽 보고가 어긋나지 않게 지키는 파수꾼</b>입니다.
+      <ul>
+        <li>병원 <b>양수보고</b> ↔ 리가메디 <b>매출보고</b>를 보고 前 사전 대조 → 행정 리스크 ↓ (양쪽 모두 이득)</li>
+        <li>매칭 키: 거래일자 + 품목 + <b>lot</b> + 수량 + 거래처 (+ 시점차 허용)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="invbanner" style="background:var(--brand-soft);border-color:#cdddfb;cursor:default">
+    <div class="i" style="background:var(--brand)">⤓</div>
+    <div class="t">데이터 소스: <b>리가메디 출고데이터(자동 보유)</b> + <b>NIMS 보고/불일치 엑셀</b>. 1차 = 엑셀 업로드, 2차 = 연계 API(개발자센터 등록 후).</div>
+    <button class="flip-btn" onclick="toast('NIMS 불일치 엑셀 업로드 (목업) — 실제 연동 시 NIMS 보고내역·불일치 다운로드본을 올립니다.')">엑셀 업로드</button>
+  </div>
+
+  <div class="invsum" id="nimsSum"></div>
+
+  <div class="card pad">
+    <table>
+      <thead>
+        <tr>
+          <th class="l">거래일</th>
+          <th class="l">품목 · 성분</th>
+          <th class="l">lot (매출/양수)</th>
+          <th>리가메디 매출</th>
+          <th>병원 양수</th>
+          <th class="l">거래처</th>
+          <th class="l">매칭 상태</th>
+          <th class="l">보정</th>
+        </tr>
+      </thead>
+      <tbody id="nimsRows"></tbody>
+    </table>
+    <div class="addhint" style="border-top:1px dashed var(--line);padding-top:12px;margin-top:6px">
+      ※ WOS는 <b>사전 대조·경고까지만</b> 합니다. NIMS 직접 입력·보고·폐기 실행은 사람이 합니다. 불일치 보정은 양쪽(병원/리가메디)에 <b>재보고를 요청</b>하는 방식이며, 처리 결과는 NIMS 화면에서 사람이 확정합니다.
     </div>
   </div>
 </section>
@@ -1006,7 +1055,68 @@ function toast(msg){
   clearTimeout(tT); tT=setTimeout(()=>{t.style.opacity="0";t.style.transform="translateX(-50%) translateY(20px)";},2600);
 }
 
+// ========================================================================
+//  NIMS 양수↔매출 매칭 (향정 전용 · 사전 대조 파수꾼)
+//  A = 리가메디 매출보고, B = 병원 양수보고. 불일치 유형별로 분류·보정 요청.
+// ========================================================================
+const NIMS=[
+ {date:"2026-05-03", item:"디오피정 0.25mg",     gen:"알프라졸람 0.25mg", lotA:"AX2403", lotB:"AX2403", qtyA:2000, qtyB:2000, party:"경희채움정신과", type:"match"},
+ {date:"2026-05-10", item:"리보트릴 0.5mg",       gen:"클로나제팜 0.5mg",  lotA:"CL2312", lotB:"CL2312", qtyA:1000, qtyB:800,  party:"경희채움정신과", type:"qty"},
+ {date:"2026-05-12", item:"스틸녹스CR 10mg",      gen:"졸피뎀 10mg",       lotA:"ZP2401", lotB:null,     qtyA:600,  qtyB:0,    party:"경희채움정신과", type:"missB"},
+ {date:"2026-05-15", item:"아티반 1mg",           gen:"로라제팜 1mg",      lotA:null,     lotB:"LO2402", qtyA:0,    qtyB:700,  party:"경희채움정신과", type:"missA"},
+ {date:"2026-05-18", item:"환인클로나제팜 0.5mg", gen:"클로나제팜 0.5mg",  lotA:"CH2402", lotB:"CH2401", qtyA:400,  qtyB:400,  party:"경희채움정신과", type:"lot"},
+ {date:"2026-05-20", item:"디오피정 0.25mg",     gen:"알프라졸람 0.25mg", lotA:"AX2403", lotB:"AX2403", qtyA:1000, qtyB:1000, party:"경희채움정신과", type:"dup"},
+ {date:"2026-05-25", item:"스틸녹스CR 10mg",      gen:"졸피뎀 10mg",       lotA:"ZP2401", lotB:"ZP2401", qtyA:300,  qtyB:300,  party:"경희채움정신과", type:"delay", delay:8},
+ {date:"2026-05-28", item:"리보트릴 0.5mg",       gen:"클로나제팜 0.5mg",  lotA:"CL2312", lotB:null,     qtyA:200,  qtyB:0,    party:"보건소 폐기",   type:"disposal"},
+ {date:"2026-05-30", item:"디오피정 0.25mg",     gen:"알프라졸람 0.25mg", lotA:"AX2403", lotB:"AX2403", qtyA:-100, qtyB:-100, party:"경희채움정신과", type:"return"},
+];
+const NIMS_META={
+  match:   {label:"일치",            cls:"ok",     action:null},
+  qty:     {label:"수량 불일치",     cls:"danger", action:"양쪽 재대조·재보고 요청"},
+  missB:   {label:"병원 미보고",     cls:"danger", action:"병원에 양수보고 요청"},
+  missA:   {label:"리가메디 미보고", cls:"danger", action:"리가메디 매출보고 보정"},
+  lot:     {label:"lot 불일치",      cls:"warn",   action:"lot 정정 요청"},
+  delay:   {label:"지연 보고",       cls:"warn",   action:"확인"},
+  dup:     {label:"중복 의심",       cls:"warn",   action:"중복 정리"},
+  disposal:{label:"폐기 내역",       cls:"info",   action:"폐기 대조 확인"},
+  return:  {label:"반품 역방향",     cls:"info",   action:"반품 대조 확인"},
+};
+function renderNims(){
+  const body=document.getElementById("nimsRows"); body.innerHTML="";
+  let total=0,match=0,bad=0,warn=0,fixed=0;
+  NIMS.forEach((r,i)=>{
+    total++; const m=NIMS_META[r.type];
+    if(r.fixed) fixed++;
+    else if(m.cls==="ok") match++;
+    else if(m.cls==="danger") bad++;
+    else if(m.cls==="warn") warn++;
+    const lotDiff=(r.lotA||null)!==(r.lotB||null);
+    const lotCell=`${r.lotA||'—'} / ${lotDiff?`<span style="color:var(--danger)">${r.lotB||'—'}</span>`:(r.lotB||'—')}`;
+    const fmtQ=q=> q===0?'<span style="color:var(--muted)">미보고</span>':(q<0?'<span style="color:var(--brand-dk)">'+q.toLocaleString("ko-KR")+'</span>':q.toLocaleString("ko-KR"));
+    const stCls=r.fixed?'fixed':m.cls, stLabel=r.fixed?'보정 요청됨':(m.label+(r.type==="delay"?` (${r.delay}일)`:''));
+    const action=(!r.fixed && m.action)?`<button class="act-btn" onclick="nimsFix(${i})">${m.action}</button>`:'<span style="color:var(--muted);font-size:12px">—</span>';
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="l">${r.date.slice(5)}</td>
+      <td class="l name">${r.item}<span class="gsub">${r.gen}</span></td>
+      <td class="l" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">${lotCell}</td>
+      <td>${fmtQ(r.qtyA)}</td><td>${fmtQ(r.qtyB)}</td>
+      <td class="l">${r.party}</td>
+      <td class="l"><span class="st2 ${stCls}">${stLabel}</span></td>
+      <td class="l">${action}</td>`;
+    body.appendChild(tr);
+  });
+  const rate=total?Math.round((match+fixed)/total*100):0;
+  document.getElementById("nimsSum").innerHTML=`
+    <div class="cell"><div class="k">총 대조</div><div class="v">${total}<small style="font-size:12px"> 건</small></div></div>
+    <div class="cell"><div class="k">일치</div><div class="v" style="color:var(--ok)">${match}<small style="font-size:12px"> 건</small></div></div>
+    <div class="cell"><div class="k">불일치(위험)</div><div class="v danger">${bad}<small style="font-size:12px"> 건</small></div></div>
+    <div class="cell"><div class="k">주의</div><div class="v warn">${warn}<small style="font-size:12px"> 건</small></div></div>
+    <div class="cell"><div class="k">정상화율</div><div class="v blue">${rate}<small style="font-size:12px">%</small></div></div>`;
+}
+function nimsFix(i){ const r=NIMS[i]; r.fixed=true; renderNims(); toast(`'${r.item}' — ${NIMS_META[r.type].action} 처리(요청 발송)되었습니다.`); }
+
 // ---------- init ----------
+renderNims();
 renderInv(); updateInvBanner();
 computeAll();
 renderRows();
