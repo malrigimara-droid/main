@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>리가메디 발주 산출 · 미리보기</title>
+<style>
+:root{
+  --bg:#f4f6f9; --card:#fff; --ink:#1a2433; --muted:#6b7785; --line:#e3e8ef;
+  --brand:#1f6feb; --brand-dk:#1a5fd0; --brand-soft:#eaf2ff; --ok:#16a34a;
+  --psy:#ea580c; --psy-soft:#fff0e6; --shadow:0 1px 3px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,"Malgun Gothic",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.5}
+header{display:flex;align-items:center;gap:12px;padding:14px 22px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header .logo{font-size:17px}
+header .tag{font-size:12.5px;color:var(--muted);background:#f1f5f9;padding:3px 10px;border-radius:999px}
+header .demo{font-size:11px;color:#fff;background:#94a3b8;padding:3px 8px;border-radius:6px;font-weight:700}
+main{max-width:980px;margin:22px auto;padding:0 18px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}
+.uploadbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.uploadbar form{display:flex;gap:10px;align-items:center;margin:0;flex-wrap:wrap}
+input[type=file]{font-size:13px}
+.btn{border:0;border-radius:10px;padding:9px 15px;font-weight:700;font-size:13.5px;cursor:pointer;text-decoration:none;display:inline-block;color:var(--ink)}
+.btn.primary{background:var(--brand);color:#fff}.btn.primary:hover{background:var(--brand-dk)}
+.btn.ghost{background:#fff;border:1px solid var(--line)}.btn.ghost:hover{background:#f7f9fc}
+.msg{font-size:13px;color:var(--ok);font-weight:600}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.summary .c{background:#fff;padding:14px 16px}
+.summary .k{font-size:12px;color:var(--muted)}
+.summary .v{font-size:18px;font-weight:800;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{text-align:right;font-size:11.5px;color:var(--muted);font-weight:700;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+thead th.l{text-align:left}
+tbody td{padding:10px;border-bottom:1px solid #f0f3f7;text-align:right;white-space:nowrap}
+tbody td.l{text-align:left}
+tbody small{color:var(--muted);font-weight:500}
+tr.sw td{background:#f6f8fc}
+tr.sw.act td{background:#f3f9ff}
+.psy{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--psy-soft);color:var(--psy)}
+.safety{width:72px;text-align:right;font-weight:600;border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-family:inherit}
+.safety:focus{outline:2px solid var(--brand);border-color:var(--brand)}
+.need b{font-size:14px}
+.note{font-size:12px;color:var(--muted);margin:12px 0 2px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">리가메디 <b>발주 산출</b></div>
+  <span class="tag">현재고 업로드 → 안전재고 차이 산출 → 발주서</span>
+  <span class="demo">미리보기 · 단독실행(서버 없이 동작)</span>
+</header>
+
+<main>
+  <section class="card uploadbar">
+    <form id="upform">
+      <input type="file" id="file" accept=".csv,text/csv">
+      <button class="btn primary" type="submit">업로드 → 산출</button>
+    </form>
+    <button class="btn ghost" id="sampleBtn">샘플 현재고 불러오기</button>
+    <button class="btn ghost" id="resetBtn">기본값</button>
+    <button class="btn ghost" id="orderBtn">발주서 CSV 내려받기</button>
+    <span id="msg" class="msg"></span>
+  </section>
+
+  <section class="summary" id="summary"></section>
+
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th class="l">성분 · 상품</th><th>현재고</th>
+          <th>안전재고 ✎</th><th>일평균</th><th>ROP</th><th>제안 발주량</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="note">※ 안전재고를 고치면 즉시 재산출됩니다. 같은 성분 두 브랜드(전환·스위칭)는 재고를 합산해 전환 대상 브랜드로 발주합니다. (예: 클로나제팜 = 환인 사용 중·리보트릴 소진)</p>
+  </section>
+</main>
+
+<script>
+// ===== 약품 마스터 (app/data/drugs.json 과 동일) =====
+const BASE = [
+  {id:"alpz",gen:"알프라졸람정 0.25mg",psy:true,vol:true,switching:false,
+   products:[{brand:"디오피정",maker:"환인",stock:140,avg:42,safety:120,lead:2,unit:35,ai:0}]},
+  {id:"clzp",gen:"클로나제팜정 0.5mg",psy:true,vol:false,switching:true,switchKind:"supply",avg:26,safety:80,lead:2,ai:0,
+   products:[{brand:"리보트릴",maker:"로슈",stock:50,unit:48,cost:36,active:false},
+             {brand:"환인클로나제팜",maker:"환인",stock:30,unit:39,cost:31,active:true}]},
+  {id:"zolp",gen:"졸피뎀정 10mg",psy:true,vol:true,switching:false,
+   products:[{brand:"스틸녹스CR",maker:"한독",stock:60,avg:55,safety:150,lead:2,unit:190,ai:18}]},
+  {id:"lora",gen:"로라제팜정 1mg",psy:true,vol:false,switching:false,
+   products:[{brand:"아티반",maker:"일동",stock:110,avg:30,safety:90,lead:2,unit:42,ai:0}]},
+  {id:"esci",gen:"에스시탈로프람정 10mg",psy:false,vol:false,switching:false,
+   products:[{brand:"렉사프로",maker:"룬드벡",stock:200,avg:48,safety:160,lead:2,unit:260,ai:0}]},
+  {id:"sert",gen:"설트랄린정 50mg",psy:false,vol:false,switching:false,
+   products:[{brand:"졸로푸트",maker:"화이자",stock:170,avg:40,safety:140,lead:2,unit:230,ai:0}]},
+  {id:"quet",gen:"쿠에티아핀정 25mg",psy:false,vol:false,switching:false,
+   products:[{brand:"쎄로켈",maker:"아스트라제네카",stock:130,avg:36,safety:110,lead:2,unit:155,ai:0}]},
+  {id:"arip",gen:"아리피프라졸정 10mg",psy:false,vol:false,switching:false,
+   products:[{brand:"아빌리파이",maker:"오츠카",stock:80,avg:22,safety:70,lead:2,unit:520,ai:0}]},
+  {id:"mela",gen:"멜라토닌서방정 2mg",psy:false,vol:true,switching:false,
+   products:[{brand:"서카딘",maker:"건일",stock:50,avg:33,safety:95,lead:2,unit:410,ai:0}]},
+];
+
+// ===== 산출 엔진 (app/compute.js 와 동일 로직) =====
+const ceilPack = n => Math.max(0, Math.ceil(n/10)*10);
+const norm = s => String(s).replace(/\s+/g,'').toLowerCase();
+const clone = () => JSON.parse(JSON.stringify(BASE));
+let G = clone();                                  // 작업본
+const SETTINGS = {};                              // 안전재고 설정 덮어쓰기
+
+function parseStockCSV(text){
+  const lines=String(text).split(/\r?\n/).filter(l=>l.trim()); if(!lines.length) return {};
+  const head=lines[0].split(',').map(s=>s.trim());
+  const nameI=head.findIndex(h=>/약품명|품명|상품명|제품명|name/i.test(h));
+  const qtyI =head.findIndex(h=>/현재고|재고|수량|qty|stock/i.test(h));
+  const start=(nameI>=0&&qtyI>=0)?1:0, map={};
+  lines.slice(start).forEach(l=>{const c=l.split(',');const name=(nameI>=0?c[nameI]:c[0]||'').trim();const qty=(qtyI>=0?c[qtyI]:c[1]||'').trim();if(name)map[name]=Number(qty)||0;});
+  return map;
+}
+function applyStock(stockMap){
+  const prods=[]; G.forEach(g=>g.products.forEach(p=>prods.push(p)));
+  let updated=0; const miss=[];
+  Object.entries(stockMap).forEach(([name,qty])=>{
+    const key=norm(name); let p=prods.find(x=>norm(x.brand)===key);
+    if(!p) p=prods.find(x=>key.includes(norm(x.brand))||norm(x.brand).includes(key));
+    if(p){p.stock=Math.max(0,Number(qty)||0);updated++;} else miss.push(name);
+  });
+  return {updated,miss};
+}
+function applySettings(){ G.forEach(g=>{ if(g.switching){ if(SETTINGS[g.id]!=null)g.safety=+SETTINGS[g.id]; } else { g.products.forEach(p=>{ if(SETTINGS[p.brand]!=null)p.safety=+SETTINGS[p.brand]; }); } }); }
+function computeGenerics(){
+  const lines=[];
+  for(const g of G){
+    if(g.switching){
+      const active=g.products.find(p=>p.active)||g.products[0];
+      const stock=g.products.reduce((s,p)=>s+(p.stock||0),0);
+      const rop=g.avg*g.lead+g.safety, need=ceilPack(rop-stock+(g.ai||0));
+      for(const p of g.products) lines.push({gen:g.gen,brand:p.brand,maker:p.maker||'',psy:!!g.psy,mode:'switching',active:p===active,stock:p.stock||0,groupStock:stock,avg:g.avg,safety:g.safety,rop,need:p===active?need:0,unit:p.unit||0,safetyKey:g.id});
+    } else {
+      for(const p of g.products){ const rop=p.avg*p.lead+p.safety, need=ceilPack(rop-p.stock+(p.ai||0));
+        lines.push({gen:g.gen,brand:p.brand,maker:p.maker||'',psy:!!g.psy,mode:'independent',stock:p.stock||0,avg:p.avg,safety:p.safety,rop,need,unit:p.unit||0,safetyKey:p.brand}); }
+    }
+  }
+  return lines;
+}
+const summarize = lines => { let kinds=0,qty=0,amt=0,psy=0; for(const l of lines){ if(l.need>0){kinds++;qty+=l.need;amt+=l.need*l.unit;if(l.psy)psy++;} } return {kinds,qty,amt,psy}; };
+function orderCSV(lines){ const rows=[['성분','상품(브랜드)','제조사','발주수량','단가','금액','향정']]; let t=0;
+  for(const l of lines){ if(l.need>0){ const a=l.need*l.unit; t+=a; rows.push([l.gen,l.brand,l.maker,l.need,l.unit,a,l.psy?'Y':'']); } }
+  rows.push(['합계','','','','',t,'']); return rows.map(r=>r.join(',')).join('\n'); }
+
+// ===== 렌더 =====
+const won = n => '₩'+(n||0).toLocaleString('ko-KR');
+const msg = m => document.getElementById('msg').textContent=m;
+const cell = (k,v) => `<div class="c"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+function render(){
+  applySettings();
+  const lines=computeGenerics();
+  const t=document.getElementById('rows'); t.innerHTML='';
+  for(const l of lines){
+    const tr=document.createElement('tr');
+    if(l.mode==='switching') tr.className=l.active?'sw act':'sw';
+    const name=l.mode==='switching'
+      ? `<b>${l.brand}</b> <small>${l.maker} · ${l.gen} · ${l.active?'전환대상·발주':'소진'}</small>`
+      : `${l.gen} <small>${l.brand} · ${l.maker}</small>`;
+    const stock=l.mode==='switching'?`${l.stock} <small>(합산 ${l.groupStock})</small>`:l.stock;
+    tr.innerHTML=`<td class="l">${name}${l.psy?' <span class="psy">향정</span>':''}</td>
+      <td>${stock}</td>
+      <td><input class="safety" data-key="${l.safetyKey}" type="number" min="0" step="10" value="${l.safety}"></td>
+      <td>${l.avg}</td><td>${l.rop}</td><td class="need"><b>${l.need}</b></td>`;
+    t.appendChild(tr);
+  }
+  const s=summarize(lines);
+  document.getElementById('summary').innerHTML=cell('발주 종수',s.kinds+' 종')+cell('총 수량',s.qty+' 정')+cell('예상 금액',won(s.amt))+cell('향정 포함',s.psy+' 종');
+}
+
+document.getElementById('upform').addEventListener('submit',e=>{
+  e.preventDefault(); const f=document.getElementById('file').files[0];
+  if(!f){msg('현재고 파일을 선택하세요.');return;}
+  const rd=new FileReader();
+  rd.onload=()=>{ const r=applyStock(parseStockCSV(rd.result)); render();
+    msg(`✓ ${r.updated}개 품목 갱신${r.miss.length?` · 미매칭 ${r.miss.length}건`:''} → 발주 필요 ${summarize(computeGenerics()).kinds}종`); };
+  rd.readAsText(f,'utf-8');
+});
+document.getElementById('sampleBtn').addEventListener('click',()=>{
+  const r=applyStock({"디오피정":40,"리보트릴":20,"환인클로나제팜":15,"스틸녹스CR":20,"아티반":50,"렉사프로":90,"졸로푸트":70,"쎄로켈":40,"아빌리파이":30,"서카딘":20});
+  render(); msg(`✓ 샘플 현재고 반영 — ${r.updated}개 품목 → 발주 필요 ${summarize(computeGenerics()).kinds}종`);
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{ G=clone(); for(const k in SETTINGS)delete SETTINGS[k]; render(); msg('기본값으로 초기화'); });
+document.getElementById('orderBtn').addEventListener('click',()=>{
+  const blob=new Blob(["﻿"+orderCSV(computeGenerics())],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='발주서.csv'; a.click();
+});
+document.getElementById('rows').addEventListener('change',e=>{
+  if(e.target.classList.contains('safety')){ SETTINGS[e.target.dataset.key]=e.target.value; render(); msg('안전재고 설정 반영 · 재산출 완료'); }
+});
+render();
+</script>
+</body>
+</html>
