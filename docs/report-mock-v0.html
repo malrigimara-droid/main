@@ -4,7 +4,7 @@
   :root{
     --desk:#E7EAE6; --paper:#FFFFFF; --panel:#F1F5F3; --line:#E2E7E4;
     --ink:#16211E; --ink-2:#3D4A45; --muted:#69766F;
-    --brand:#0B5C4E; --good:#059669; --warn:#B45309; --neutral:#64748B;
+    --brand:#0B5C4E; --brand-fill:#0B5C4E; --good:#059669; --warn:#B45309; --neutral:#64748B;
     --good-soft:#E4F3EC; --warn-soft:#F6EADD; --neutral-soft:#EAEDF0;
     --shadow:0 1px 2px rgba(20,33,29,.06),0 18px 44px -18px rgba(20,33,29,.28);
     --ff:'Pretendard','Pretendard Variable',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
@@ -13,7 +13,7 @@
     :root{
       --desk:#0C0E0C; --paper:#191B18; --panel:#22251F; --line:#2E322B;
       --ink:#EBEDE7; --ink-2:#C3C9C1; --muted:#8E968D;
-      --brand:#5FD3B8; --good:#059669; --warn:#B45309; --neutral:#7A8794;
+      --brand:#5FD3B8; --brand-fill:#114B3F; --good:#0DA271; --warn:#C77E35; --neutral:#7A8794;
       --good-soft:#123329; --warn-soft:#33230F; --neutral-soft:#232A31;
       --shadow:0 1px 2px rgba(0,0,0,.4),0 20px 50px -20px rgba(0,0,0,.7);
     }
@@ -21,14 +21,14 @@
   :root[data-theme="light"]{
     --desk:#E7EAE6; --paper:#FFFFFF; --panel:#F1F5F3; --line:#E2E7E4;
     --ink:#16211E; --ink-2:#3D4A45; --muted:#69766F;
-    --brand:#0B5C4E; --good:#059669; --warn:#B45309; --neutral:#64748B;
+    --brand:#0B5C4E; --brand-fill:#0B5C4E; --good:#059669; --warn:#B45309; --neutral:#64748B;
     --good-soft:#E4F3EC; --warn-soft:#F6EADD; --neutral-soft:#EAEDF0;
     --shadow:0 1px 2px rgba(20,33,29,.06),0 18px 44px -18px rgba(20,33,29,.28);
   }
   :root[data-theme="dark"]{
     --desk:#0C0E0C; --paper:#191B18; --panel:#22251F; --line:#2E322B;
     --ink:#EBEDE7; --ink-2:#C3C9C1; --muted:#8E968D;
-    --brand:#5FD3B8; --good:#059669; --warn:#B45309; --neutral:#7A8794;
+    --brand:#5FD3B8; --brand-fill:#114B3F; --good:#0DA271; --warn:#C77E35; --neutral:#7A8794;
     --good-soft:#123329; --warn-soft:#33230F; --neutral-soft:#232A31;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 20px 50px -20px rgba(0,0,0,.7);
   }
@@ -58,7 +58,7 @@
   /* ── section scaffolding ── */
   .sec{padding-top:30px}
   .sec-h{display:flex;align-items:center;gap:9px;margin-bottom:16px}
-  .sec-n{font-size:11px;font-weight:800;color:var(--paper);background:var(--brand);
+  .sec-n{font-size:11px;font-weight:800;color:#fff;background:var(--brand-fill);
     width:19px;height:19px;border-radius:5px;display:grid;place-items:center}
   .sec-t{font-weight:800;font-size:15.5px;letter-spacing:-.01em}
   .sec-cap{color:var(--muted);font-size:12.5px;font-weight:600}
@@ -153,7 +153,7 @@
   /* ── scoreboard (4DX lead measures) ── */
   .board{border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .board-top{display:flex;justify-content:space-between;align-items:center;
-    background:var(--brand);color:#fff;padding:12px 16px}
+    background:var(--brand-fill);color:#fff;padding:12px 16px}
   .board-top .t{font-weight:800;font-size:13.5px}
   .board-top .wk{font-size:11px;font-weight:700;opacity:.85}
   .lead{display:flex;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--line)}
@@ -168,12 +168,12 @@
   .board-note{font-size:11.5px;color:var(--muted);padding:10px 16px;background:var(--panel);font-weight:600}
 
   /* ── handoff footer ── */
-  .handoff{margin-top:30px;background:var(--brand);border-radius:14px;padding:24px 26px;color:#fff;
+  .handoff{margin-top:30px;background:var(--brand-fill);border-radius:14px;padding:24px 26px;color:#fff;
     display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
   .handoff .cap{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;opacity:.8}
   .handoff .h{font-size:18px;font-weight:800;line-height:1.4;margin-top:6px;text-wrap:balance}
   .handoff .h b{color:#BDF0DE}
-  .cta{background:#fff;color:var(--brand);font-weight:800;font-size:14px;padding:13px 22px;
+  .cta{background:#fff;color:var(--brand-fill);font-weight:800;font-size:14px;padding:13px 22px;
     border-radius:10px;border:0;cursor:pointer;white-space:nowrap}
   .free-note{text-align:center;color:var(--muted);font-size:11.5px;margin-top:16px;font-weight:600}
 
@@ -182,8 +182,21 @@
     border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;
     cursor:pointer;box-shadow:var(--shadow);font-family:var(--ff)}
   :focus-visible{outline:2px solid var(--good);outline-offset:2px}
-  @media print{body{background:#fff;padding:0}.page{box-shadow:none;max-width:none}.tt{display:none}}
-  @media(prefers-reduced-motion:no-preference){.fill{transition:width .6s cubic-bezier(.2,.7,.2,1)}}
+
+  /* ── A4 인쇄: 색 보존 + 카드 단위 페이지 나눔 ── */
+  @page{size:A4;margin:11mm}
+  @media print{
+    body{background:#fff;padding:0}
+    .page{box-shadow:none;max-width:none;border-radius:0}
+    .tt{display:none}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .card,.board,.surf-wrap,.today,.handoff,.hero{break-inside:avoid}
+  }
+
+  /* ── report footer ── */
+  .rfoot{border-top:1px solid var(--line);margin-top:26px;padding-top:14px;
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    font-size:10.5px;color:var(--muted);font-weight:600}
 </style>
 
 <button class="tt" id="tt" aria-label="테마 전환">◐ 테마</button>
@@ -212,7 +225,7 @@
             <svg viewBox="0 0 150 118" width="150" height="118" aria-hidden="true">
               <path fill="none" stroke="var(--panel)" stroke-width="13" stroke-linecap="round"
                 d="M 29.97 108 A 52 52 0 1 1 120.03 108"/>
-              <path fill="none" stroke="var(--good)" stroke-width="13" stroke-linecap="round"
+              <path fill="none" stroke="var(--warn)" stroke-width="13" stroke-linecap="round"
                 d="M 29.97 108 A 52 52 0 0 1 66.33 30.73"/>
             </svg>
             <div class="val"><span class="big num">46</span><span class="den num">/ 100</span></div>
@@ -301,7 +314,7 @@
           </div>
         </div>
         <div class="card">
-          <h4>검색 노출 <small>· ‘방배 왁싱’ 월 50 검색</small></h4>
+          <h4>검색 노출 <small>· ‘방배 왁싱’ 블로그 영역 · 월 50 검색</small></h4>
           <div class="rank">
             <div class="row"><span class="r num">1</span><span class="nm">포라누나 Family</span></div>
             <div class="row me"><span class="r num">2</span><span class="nm">고고왁싱<span class="you">우리 가게</span></span></div>
@@ -337,6 +350,11 @@
       <button class="cta">동행 시작하기 →</button>
     </div>
     <p class="free-note">진단·리포트는 전부 무료입니다. 동행(실행 대행)만 선택 구독이에요.</p>
+
+    <footer class="rfoot">
+      <span>타개 TAGAE · app.tagae.kr</span>
+      <span class="num">다음 진단 2026. 6. 23 — 오늘의 숫자가 움직였는지 그때 확인합니다</span>
+    </footer>
 
   </div>
 </div>
