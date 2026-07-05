@@ -25,6 +25,47 @@ export function claudeEngine(model?: string): EngineAdapter {
   };
 }
 
+/** Claude + 웹검색: "검색을 켠 AI"의 대리 측정. citations 실측 가능.
+ *  로컬 가게는 모델 지식엔 없고(무검색 실측으로 확인) 검색 소스에 있다 —
+ *  이 열이 진짜 게임. 비용: 검색 1회 ≈ $0.01 + 토큰. */
+export function claudeSearchEngine(model?: string): EngineAdapter {
+  return {
+    id: "claude_search",
+    async ask(question: string): Promise<EngineAnswer> {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: model ?? "claude-sonnet-5",
+          max_tokens: 1500,
+          system:
+            "당신은 사용자의 일상 질문에 답하는 어시스턴트다. 필요하면 웹검색으로 " +
+            "실제 업체를 찾아 구체적인 업체명을 들어 답한다.",
+          messages: [{ role: "user", content: question }],
+          tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }],
+        }),
+      });
+      if (!res.ok) throw new Error(`Claude(search) API ${res.status}: ${await res.text()}`);
+      const data = (await res.json()) as { content: any[] };
+
+      const text = data.content
+        .filter((c) => c.type === "text").map((c) => c.text).join("");
+      const urls = new Set<string>();
+      for (const c of data.content) {
+        if (c.type === "text")
+          for (const cit of c.citations ?? []) if (cit.url) urls.add(cit.url);
+        if (c.type === "web_search_tool_result")
+          for (const r of Array.isArray(c.content) ? c.content : []) if (r.url) urls.add(r.url);
+      }
+      return { text, citations: [...urls] }; // 검색 엔진 → citations 실측
+    },
+  };
+}
+
 /** 스텁: API 키 없이 파이프라인(판정·집계·놓친질문) 검증용.
  *  경쟁사만 언급하는 최악 시나리오를 결정적으로 재현한다. */
 export function stubEngine(competitorPool: string[]): EngineAdapter {

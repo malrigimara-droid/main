@@ -7,7 +7,7 @@
 // 경쟁 엔티티는 정밀진단·점유맵에서 확인된 실명 사용.
 
 import { runProbe, type ProbeSnapshot } from "./llmProbe.js";
-import { claudeEngine, stubEngine } from "./probeEngines.js";
+import { claudeEngine, claudeSearchEngine, stubEngine } from "./probeEngines.js";
 
 const CASES = [
   {
@@ -43,7 +43,7 @@ function printSnapshot(s: ProbeSnapshot) {
   for (const q of s.agg.missedQuestions) console.log(`    - ${q}`);
   console.log(`  셀 상세:`);
   for (const c of s.cells)
-    console.log(`    [${c.engine}] ${c.mentioned ? `등장(${c.mentionRank}번째)` : "미등장"} · 대신: ${c.competitorsMentioned.join(",") || "-"} · "${c.answerExcerpt.slice(0, 60)}..."`);
+    console.log(`    [${c.engine}] ${c.mentioned ? `등장(${c.mentionRank}번째)` : "미등장"} · 대신: ${c.competitorsMentioned.join(",") || "-"}${c.citedMine !== null ? ` · 내채널인용:${c.citedMine ? "O" : "X"}` : ""} · "${c.answerExcerpt.slice(0, 60)}..."`);
 }
 
 async function main() {
@@ -56,7 +56,7 @@ async function main() {
 
   for (const c of CASES) {
     const engines = real
-      ? [claudeEngine()]
+      ? [claudeEngine(), claudeSearchEngine()]  // 무검색 vs 검색 — 대비가 곧 발견
       : [stubEngine(c.entities.filter((e) => !e.isMine).map((e) => e.name))];
     const snap = await runProbe({ ...c, engines });
     printSnapshot(snap);

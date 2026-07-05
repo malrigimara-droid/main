@@ -59,7 +59,7 @@ export interface EngineAnswer {
   citations: string[] | null;  // 출처 URL. 못 주는 엔진은 null (미측정)
 }
 export interface EngineAdapter {
-  id: "chatgpt" | "gemini" | "claude" | "perplexity" | "naver" | "stub";
+  id: "chatgpt" | "gemini" | "claude" | "claude_search" | "perplexity" | "naver" | "stub";
   ask(question: string): Promise<EngineAnswer>;
 }
 
