@@ -7,7 +7,7 @@
 // 경쟁 엔티티는 정밀진단·점유맵에서 확인된 실명 사용.
 
 import { runProbe, type ProbeSnapshot } from "./llmProbe.js";
-import { claudeEngine, claudeSearchEngine, stubEngine } from "./probeEngines.js";
+import { chatgptEngine, claudeEngine, claudeSearchEngine, geminiEngine, stubEngine } from "./probeEngines.js";
 
 const CASES = [
   {
@@ -50,13 +50,24 @@ async function main() {
   const forceStub = process.argv.includes("--stub");
   const hasKey = !!process.env.ANTHROPIC_API_KEY;
   const real = hasKey && !forceStub;
-  console.log(real
-    ? "▶ 실측 모드 (claude 엔진)"
-    : `▶ 드라이런 모드 (stub 엔진)${hasKey ? "" : " — ANTHROPIC_API_KEY 없음"}. 숫자는 검증용이며 실측이 아님.`);
+
+  // 키가 있는 엔진만 자동 편성 — 키 추가 = 열 추가
+  const realEngines = [
+    claudeEngine(), claudeSearchEngine(),       // 무검색 vs 검색 — 대비가 곧 발견
+    ...(process.env.OPENAI_API_KEY ? [chatgptEngine()] : []),
+    ...(process.env.GEMINI_API_KEY ? [geminiEngine()] : []),
+  ];
+  if (real) {
+    console.log(`▶ 실측 모드 — 엔진 ${realEngines.length}개: ${realEngines.map((e) => e.id).join(", ")}`);
+    if (!process.env.OPENAI_API_KEY) console.log("  (OPENAI_API_KEY 없음 — chatgpt 열 제외)");
+    if (!process.env.GEMINI_API_KEY) console.log("  (GEMINI_API_KEY 없음 — gemini 열 제외)");
+  } else {
+    console.log(`▶ 드라이런 모드 (stub 엔진)${hasKey ? "" : " — ANTHROPIC_API_KEY 없음"}. 숫자는 검증용이며 실측이 아님.`);
+  }
 
   for (const c of CASES) {
     const engines = real
-      ? [claudeEngine(), claudeSearchEngine()]  // 무검색 vs 검색 — 대비가 곧 발견
+      ? realEngines
       : [stubEngine(c.entities.filter((e) => !e.isMine).map((e) => e.name))];
     const snap = await runProbe({ ...c, engines });
     printSnapshot(snap);

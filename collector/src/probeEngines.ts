@@ -66,6 +66,84 @@ export function claudeSearchEngine(model?: string): EngineAdapter {
   };
 }
 
+/** ChatGPT + 웹검색 (OpenAI Responses API). OPENAI_API_KEY 필요. */
+export function chatgptEngine(model?: string): EngineAdapter {
+  return {
+    id: "chatgpt",
+    async ask(question: string): Promise<EngineAnswer> {
+      const res = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: model ?? process.env.OPENAI_PROBE_MODEL ?? "gpt-5-mini",
+          instructions:
+            "당신은 사용자의 일상 질문에 답하는 어시스턴트다. 필요하면 웹검색으로 " +
+            "실제 업체를 찾아 구체적인 업체명을 들어 답한다.",
+          input: question,
+          tools: [{ type: "web_search" }],
+        }),
+      });
+      if (!res.ok) throw new Error(`OpenAI API ${res.status}: ${await res.text()}`);
+      const data = (await res.json()) as { output?: any[] };
+
+      let text = "";
+      const urls = new Set<string>();
+      for (const item of data.output ?? []) {
+        if (item.type !== "message") continue;
+        for (const c of item.content ?? []) {
+          if (c.type === "output_text") {
+            text += c.text ?? "";
+            for (const a of c.annotations ?? [])
+              if (a.type === "url_citation" && a.url) urls.add(a.url);
+          }
+        }
+      }
+      return { text, citations: [...urls] };
+    },
+  };
+}
+
+/** Gemini + 구글검색 그라운딩. GEMINI_API_KEY 필요 (aistudio.google.com/apikey). */
+export function geminiEngine(model?: string): EngineAdapter {
+  const m = model ?? process.env.GEMINI_PROBE_MODEL ?? "gemini-2.5-flash";
+  return {
+    id: "gemini",
+    async ask(question: string): Promise<EngineAnswer> {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "x-goog-api-key": process.env.GEMINI_API_KEY ?? "",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text:
+              "당신은 사용자의 일상 질문에 답하는 어시스턴트다. 필요하면 검색으로 " +
+              "실제 업체를 찾아 구체적인 업체명을 들어 답한다." }] },
+            contents: [{ role: "user", parts: [{ text: question }] }],
+            tools: [{ google_search: {} }],
+          }),
+        },
+      );
+      if (!res.ok) throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+      const data = (await res.json()) as { candidates?: any[] };
+      const cand = data.candidates?.[0];
+
+      const text = (cand?.content?.parts ?? [])
+        .map((p: any) => p.text ?? "").join("");
+      const urls = new Set<string>();
+      for (const ch of cand?.groundingMetadata?.groundingChunks ?? [])
+        if (ch.web?.uri) urls.add(ch.web.uri);
+      return { text, citations: urls.size ? [...urls] : null };
+      // 그라운딩이 발동 안 하면 citations 없음 → null(미측정)로 정직 처리
+    },
+  };
+}
+
 /** 스텁: API 키 없이 파이프라인(판정·집계·놓친질문) 검증용.
  *  경쟁사만 언급하는 최악 시나리오를 결정적으로 재현한다. */
 export function stubEngine(competitorPool: string[]): EngineAdapter {
