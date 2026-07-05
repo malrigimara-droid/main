@@ -1,0 +1,350 @@
+<title>고고왁싱 · 타개 정밀진단 리포트</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --desk:#E7EAE6; --paper:#FFFFFF; --panel:#F1F5F3; --line:#E2E7E4;
+    --ink:#16211E; --ink-2:#3D4A45; --muted:#69766F;
+    --brand:#0B5C4E; --good:#059669; --warn:#B45309; --neutral:#64748B;
+    --good-soft:#E4F3EC; --warn-soft:#F6EADD; --neutral-soft:#EAEDF0;
+    --shadow:0 1px 2px rgba(20,33,29,.06),0 18px 44px -18px rgba(20,33,29,.28);
+    --ff:'Pretendard','Pretendard Variable',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --desk:#0C0E0C; --paper:#191B18; --panel:#22251F; --line:#2E322B;
+      --ink:#EBEDE7; --ink-2:#C3C9C1; --muted:#8E968D;
+      --brand:#5FD3B8; --good:#059669; --warn:#B45309; --neutral:#7A8794;
+      --good-soft:#123329; --warn-soft:#33230F; --neutral-soft:#232A31;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 20px 50px -20px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"]{
+    --desk:#E7EAE6; --paper:#FFFFFF; --panel:#F1F5F3; --line:#E2E7E4;
+    --ink:#16211E; --ink-2:#3D4A45; --muted:#69766F;
+    --brand:#0B5C4E; --good:#059669; --warn:#B45309; --neutral:#64748B;
+    --good-soft:#E4F3EC; --warn-soft:#F6EADD; --neutral-soft:#EAEDF0;
+    --shadow:0 1px 2px rgba(20,33,29,.06),0 18px 44px -18px rgba(20,33,29,.28);
+  }
+  :root[data-theme="dark"]{
+    --desk:#0C0E0C; --paper:#191B18; --panel:#22251F; --line:#2E322B;
+    --ink:#EBEDE7; --ink-2:#C3C9C1; --muted:#8E968D;
+    --brand:#5FD3B8; --good:#059669; --warn:#B45309; --neutral:#7A8794;
+    --good-soft:#123329; --warn-soft:#33230F; --neutral-soft:#232A31;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 20px 50px -20px rgba(0,0,0,.7);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--desk);color:var(--ink);font-family:var(--ff);
+    -webkit-font-smoothing:antialiased;line-height:1.5;padding:28px 16px 60px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ── A4 page ── */
+  .page{max-width:794px;margin:0 auto;background:var(--paper);border-radius:6px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .pad{padding:40px 46px}
+  @media(max-width:560px){.pad{padding:26px 20px}}
+
+  /* ── header ── */
+  .rhead{display:flex;justify-content:space-between;align-items:flex-start;
+    border-bottom:1px solid var(--line);padding-bottom:22px}
+  .wm{display:flex;align-items:center;gap:8px;color:var(--brand);font-weight:800;letter-spacing:.02em}
+  .wm .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent)}
+  .eyebrow{font-size:11px;letter-spacing:.18em;color:var(--muted);font-weight:700;text-transform:uppercase}
+  .store{font-size:34px;font-weight:800;letter-spacing:-.01em;margin:12px 0 4px;text-wrap:balance}
+  .meta{color:var(--muted);font-size:13.5px}
+  .badge{font-size:11.5px;font-weight:700;color:var(--good);background:var(--good-soft);
+    border:1px solid color-mix(in srgb,var(--good) 30%,transparent);padding:5px 10px;border-radius:999px;white-space:nowrap}
+
+  /* ── section scaffolding ── */
+  .sec{padding-top:30px}
+  .sec-h{display:flex;align-items:center;gap:9px;margin-bottom:16px}
+  .sec-n{font-size:11px;font-weight:800;color:var(--paper);background:var(--brand);
+    width:19px;height:19px;border-radius:5px;display:grid;place-items:center}
+  .sec-t{font-weight:800;font-size:15.5px;letter-spacing:-.01em}
+  .sec-cap{color:var(--muted);font-size:12.5px;font-weight:600}
+
+  /* ── hero: gauge + WIG ── */
+  .hero{display:grid;grid-template-columns:150px 1fr;gap:28px;align-items:center}
+  @media(max-width:560px){.hero{grid-template-columns:1fr;gap:18px;text-align:center}}
+  .gauge{position:relative;width:150px;height:118px;margin:0 auto}
+  .gauge .val{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding-top:14px}
+  .gauge .big{font-size:46px;font-weight:800;line-height:1;letter-spacing:-.02em}
+  .gauge .den{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px}
+  .wig-lead{font-size:13px;font-weight:700;color:var(--warn);letter-spacing:.02em;margin-bottom:7px}
+  .wig-head{font-size:19px;font-weight:800;line-height:1.4;letter-spacing:-.01em;text-wrap:balance}
+  .wig-head b{color:var(--warn)}
+  .wig-goal{margin-top:14px;background:var(--panel);border:1px solid var(--line);
+    border-left:3px solid var(--brand);border-radius:8px;padding:12px 14px;font-size:13.5px}
+  .wig-goal .k{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:var(--brand);text-transform:uppercase;display:block;margin-bottom:4px}
+  .wig-goal b{font-weight:800}
+
+  /* ── funnel ── */
+  .funnel{display:flex;flex-direction:column;gap:10px}
+  .stage{display:grid;grid-template-columns:66px 1fr auto;gap:14px;align-items:center}
+  .stage .lab{font-size:13px;font-weight:700}
+  .track{position:relative;height:26px;background:var(--panel);border-radius:6px;overflow:hidden}
+  .fill{position:absolute;top:0;left:0;height:100%;border-radius:6px;
+    background:var(--good);display:flex;align-items:center}
+  .fill.measuring{background:transparent;width:100%;
+    background-image:repeating-linear-gradient(45deg,color-mix(in srgb,var(--neutral) 30%,transparent) 0 6px,transparent 6px 12px);
+    border:1px dashed color-mix(in srgb,var(--neutral) 60%,transparent)}
+  .tag{font-size:12px;font-weight:800;min-width:58px;text-align:right}
+  .tag .st{display:block;font-size:10px;font-weight:700;color:var(--muted)}
+  .chip{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.02em}
+  .chip.bot{color:var(--warn);background:var(--warn-soft)}
+  .measuring-lab{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    font-size:11px;font-weight:800;color:var(--neutral);letter-spacing:.04em}
+
+  /* ── 발견 3표면: SEO·GEO·AIO ── */
+  .surf-wrap{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .surf-head{font-size:13px;font-weight:800;margin-bottom:13px}
+  .surf-head small{font-weight:700;color:var(--muted);letter-spacing:.02em}
+  .surfaces{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+  @media(max-width:560px){.surfaces{grid-template-columns:1fr}}
+  .surf{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:13px 14px;display:flex;flex-direction:column}
+  .surf .code{font-size:17px;font-weight:800;letter-spacing:.03em}
+  .surf .full{font-size:10px;color:var(--muted);font-weight:700;margin:1px 0 9px;letter-spacing:.01em}
+  .surf .desc{font-size:11.5px;color:var(--ink-2);line-height:1.46;flex:1}
+  .surf .pill{margin-top:11px;align-self:flex-start;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px}
+  .pill.on{color:var(--good);background:var(--good-soft)}
+  .pill.off{color:var(--neutral);background:var(--neutral-soft);
+    background-image:repeating-linear-gradient(45deg,color-mix(in srgb,var(--neutral) 16%,transparent) 0 5px,transparent 5px 10px)}
+  .pill.exp{color:var(--warn);background:var(--warn-soft)}
+  .surf-note{font-size:11.5px;color:var(--muted);margin:13px 0 0;font-weight:600;line-height:1.5}
+  .surf-note b{color:var(--warn)}
+
+  /* ── two-up ── */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:560px){.two{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .card h4{margin:0 0 12px;font-size:12.5px;font-weight:800;letter-spacing:.02em}
+  .card h4 small{font-weight:700;color:var(--muted);letter-spacing:0}
+
+  /* field facts */
+  .facts{display:flex;flex-direction:column;gap:11px}
+  .fact{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    padding-bottom:11px;border-bottom:1px dashed var(--line)}
+  .fact:last-child{border:0;padding-bottom:0}
+  .fact .l{font-size:12.5px;color:var(--ink-2);font-weight:600}
+  .fact .v{font-size:14px;font-weight:800}
+  .fact .v small{font-weight:700;color:var(--muted);font-size:11px}
+
+  /* ranking */
+  .rank{display:flex;flex-direction:column;gap:7px}
+  .row{display:grid;grid-template-columns:20px 1fr;gap:10px;align-items:center;
+    padding:7px 9px;border-radius:7px}
+  .row .r{font-size:12px;font-weight:800;color:var(--muted);text-align:center}
+  .row .nm{font-size:12.5px;font-weight:600;color:var(--ink-2)}
+  .row.me{background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 30%,transparent)}
+  .row.me .r{color:var(--good)} .row.me .nm{color:var(--ink);font-weight:800}
+  .row.me .nm .you{font-size:10.5px;font-weight:800;color:var(--good);margin-left:6px}
+
+  /* ── scoreboard (4DX lead measures) ── */
+  .board{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .board-top{display:flex;justify-content:space-between;align-items:center;
+    background:var(--brand);color:#fff;padding:12px 16px}
+  :root[data-theme="dark"] .board-top,@media(prefers-color-scheme:dark){}
+  .board-top .t{font-weight:800;font-size:13.5px}
+  .board-top .wk{font-size:11px;font-weight:700;opacity:.85}
+  .lead{display:flex;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--line)}
+  .lead:first-of-type{border-top:0}
+  .box{width:19px;height:19px;border-radius:5px;border:2px solid var(--neutral);flex:none;display:grid;place-items:center}
+  .box.done{background:var(--good);border-color:var(--good)}
+  .box.done::after{content:"✓";color:#fff;font-size:12px;font-weight:800}
+  .lead .txt{flex:1;font-size:13px;font-weight:600}
+  .lead .who{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .who.tagae{color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,transparent)}
+  .who.owner{color:var(--warn);background:var(--warn-soft)}
+  .board-note{font-size:11.5px;color:var(--muted);padding:10px 16px;background:var(--panel);font-weight:600}
+
+  /* ── handoff footer ── */
+  .handoff{margin-top:30px;background:var(--brand);border-radius:14px;padding:24px 26px;color:#fff;
+    display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  .handoff .cap{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;opacity:.8}
+  .handoff .h{font-size:18px;font-weight:800;line-height:1.4;margin-top:6px;text-wrap:balance}
+  .handoff .h b{color:#BDF0DE}
+  .cta{background:#fff;color:var(--brand);font-weight:800;font-size:14px;padding:13px 22px;
+    border-radius:10px;border:0;cursor:pointer;white-space:nowrap}
+  .free-note{text-align:center;color:var(--muted);font-size:11.5px;margin-top:16px;font-weight:600}
+
+  /* theme toggle */
+  .tt{position:fixed;top:14px;right:16px;z-index:9;background:var(--paper);color:var(--ink);
+    border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;
+    cursor:pointer;box-shadow:var(--shadow);font-family:var(--ff)}
+  :focus-visible{outline:2px solid var(--good);outline-offset:2px}
+  @media print{body{background:#fff;padding:0}.page{box-shadow:none;max-width:none}.tt{display:none}}
+  @media(prefers-reduced-motion:no-preference){.fill{transition:width .6s cubic-bezier(.2,.7,.2,1)}}
+</style>
+
+<button class="tt" id="tt" aria-label="테마 전환">◐ 테마</button>
+
+<div class="page">
+  <div class="pad">
+
+    <!-- HEADER -->
+    <header class="rhead">
+      <div>
+        <div class="wm"><span class="dot"></span>타개 <span style="color:var(--muted);font-weight:700">TAGAE</span></div>
+        <div class="eyebrow" style="margin-top:16px">정밀진단 리포트</div>
+        <h1 class="store">고고왁싱</h1>
+        <div class="meta num">방배동 · 뷰티/미용 &nbsp;·&nbsp; 2026. 6. 16</div>
+      </div>
+      <span class="badge">전체 무료 공개</span>
+    </header>
+
+    <!-- ① 한눈 + WIG -->
+    <section class="sec">
+      <div class="sec-h"><span class="sec-n">1</span><span class="sec-t">지금 우리 가게</span>
+        <span class="sec-cap">— 이번 달, 딱 하나만 본다면</span></div>
+      <div class="hero">
+        <div>
+          <div class="gauge">
+            <svg viewBox="0 0 150 118" width="150" height="118" aria-hidden="true">
+              <path id="gtrack" fill="none" stroke="var(--panel)" stroke-width="13" stroke-linecap="round"/>
+              <path id="gfill" fill="none" stroke="var(--good)" stroke-width="13" stroke-linecap="round"/>
+            </svg>
+            <div class="val"><span class="big num">46</span><span class="den num">/ 100</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="wig-lead">⚠ 가장 위험한 구멍</div>
+          <p class="wig-head" style="margin:0">지금 가장 위험한 구멍은 <b>재방문</b>입니다. 측정조차 안 되고 있어요 — 새는지 보이지도 않는 게 제일 무섭습니다.</p>
+          <div class="wig-goal">
+            <span class="k">이번 목표 (30일)</span>
+            재방문을 <b>“측정 안 됨”</b>에서 <b>“측정 살아있음 + 첫 재방문 확인”</b>으로.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ② 손님 동선 파이프라인 -->
+    <section class="sec">
+      <div class="sec-h"><span class="sec-n">2</span><span class="sec-t">손님이 오는 길</span>
+        <span class="sec-cap">— 발견 → 전환 → 재방문 → 추천</span></div>
+      <div class="funnel" id="funnel">
+        <div class="stage">
+          <span class="lab">발견</span>
+          <div class="track"><div class="fill" data-w="57"></div></div>
+          <span class="tag"><span class="num">57</span><span class="st">보통</span></span>
+        </div>
+        <div class="stage">
+          <span class="lab">전환</span>
+          <div class="track"><div class="fill" data-w="65"></div></div>
+          <span class="tag"><span class="num">65</span><span class="st">양호</span></span>
+        </div>
+        <div class="stage">
+          <span class="lab">재방문</span>
+          <div class="track"><div class="fill measuring"></div><span class="measuring-lab">측정 전 — 장치 없음</span></div>
+          <span class="chip bot">병목</span>
+        </div>
+        <div class="stage">
+          <span class="lab">추천</span>
+          <div class="track"><div class="fill" data-w="68"></div></div>
+          <span class="tag"><span class="num">68</span><span class="st">강함</span></span>
+        </div>
+      </div>
+      <p class="sec-cap" style="margin-top:12px;font-weight:600;color:var(--muted)">
+        추천(68)은 이미 강합니다. 그런데 그 사이 <b style="color:var(--warn)">재방문은 재는 장치조차 없어요</b> — 강한 추천이 새 나가는 지점입니다.</p>
+
+      <div class="surf-wrap">
+        <div class="surf-head">발견은 이제 세 곳에서 일어납니다 <small>— 검색이 SEO 하나가 아니게 됐어요</small></div>
+        <div class="surfaces">
+          <div class="surf">
+            <span class="code">SEO</span><span class="full">검색엔진 최적화</span>
+            <span class="desc">네이버·구글에서 ‘검색하면’ 위에 뜨나. 블로그·플레이스 순위.</span>
+            <span class="pill on">● 노출 중 · 블로그 2위</span>
+          </div>
+          <div class="surf">
+            <span class="code">GEO</span><span class="full">생성형 엔진 최적화</span>
+            <span class="desc">ChatGPT·제미나이·퍼플렉시티·큐가 답할 때 우리를 언급하나.</span>
+            <span class="pill off">◐ 확인 안 됨 · 표본 질의 예정</span>
+          </div>
+          <div class="surf">
+            <span class="code">AIO</span><span class="full">AI 개요 최적화</span>
+            <span class="desc">구글 AI 개요·네이버 AI 요약 상단 블록에 인용되나.</span>
+            <span class="pill exp">◔ 측정 실험 중</span>
+          </div>
+        </div>
+        <p class="surf-note">전통 SEO만 보면 ‘가로등 밑 열쇠 찾기’예요. <b>AI 답변(GEO·AIO)은 아직 경쟁사도 대부분 못 잡은 무주공산</b> — 지금이 선점 타이밍입니다.</p>
+      </div>
+    </section>
+
+    <!-- ③ 실제 상황 -->
+    <section class="sec">
+      <div class="sec-h"><span class="sec-n">3</span><span class="sec-t">실제 상황</span>
+        <span class="sec-cap">— 진짜 그런지 봅니다</span></div>
+      <div class="two">
+        <div class="card">
+          <h4>우리 가게 현장 <small>· 0주차 기준점</small></h4>
+          <div class="facts">
+            <div class="fact"><span class="l">플레이스 순위 <small>‘방배 왁싱’</small></span><span class="v num">2위</span></div>
+            <div class="fact"><span class="l">블로그 최신글</span><span class="v num">0일 전</span></div>
+            <div class="fact"><span class="l">인스타</span><span class="v">운영 중</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h4>검색 노출 <small>· ‘방배 왁싱’ 월 50 검색</small></h4>
+          <div class="rank">
+            <div class="row"><span class="r num">1</span><span class="nm">포라누나 Family</span></div>
+            <div class="row me"><span class="r num">2</span><span class="nm">고고왁싱<span class="you">우리 가게</span></span></div>
+            <div class="row"><span class="r num">3</span><span class="nm">카카오쎈 살롱</span></div>
+            <div class="row"><span class="r num">4</span><span class="nm">다채로운 매일매일의 기록장</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ④ 이번 주 실행 (4DX 선행지표 점수판) -->
+    <section class="sec">
+      <div class="sec-h"><span class="sec-n">4</span><span class="sec-t">이번 주 할 일</span>
+        <span class="sec-cap">— 결과가 아니라, 결과를 만드는 행동</span></div>
+      <div class="board">
+        <div class="board-top">
+          <span class="t">선행지표 점수판</span><span class="wk num">1주차 · 4개 중 2개 완료</span>
+        </div>
+        <div class="lead"><span class="box done"></span><span class="txt">네이버예약(또는 톡채널) 세팅 — 재방문 ‘측정 장치’ 켜기</span><span class="who tagae">타개</span></div>
+        <div class="lead"><span class="box done"></span><span class="txt">재방문 안내 메시지 초안 준비</span><span class="who tagae">타개</span></div>
+        <div class="lead"><span class="box"></span><span class="txt">재방문 안내 메시지 1회 발송</span><span class="who owner">사장님</span></div>
+        <div class="lead"><span class="box"></span><span class="txt">시술 후 “다음에 또 오세요” 한마디 건네기</span><span class="who owner">사장님 몫</span></div>
+        <div class="board-note">👉 ‘사장님 몫’이 매주 하나씩 있는 이유 — 직접 이겨야 내 가게가 됩니다. 대행은 옆에서 돕습니다.</div>
+      </div>
+    </section>
+
+    <!-- HANDOFF -->
+    <div class="handoff">
+      <div>
+        <div class="cap">여기까지가 무료 진단</div>
+        <div class="h">이 점수판을 <b>매주 같이 채워 나가는 것</b> — 그게 동행입니다.</div>
+      </div>
+      <button class="cta">동행 시작하기 →</button>
+    </div>
+    <p class="free-note">진단·리포트는 전부 무료입니다. 동행(실행 대행)만 선택 구독이에요.</p>
+
+  </div>
+</div>
+
+<script>
+  // theme toggle
+  const tt=document.getElementById('tt');
+  tt.addEventListener('click',()=>{
+    const cur=document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+    document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  });
+
+  // gauge arc (240° sweep, start 150°)
+  const cx=75,cy=82,r=52,start=150,sweep=240;
+  const pol=(a)=>{const rad=(a)*Math.PI/180;return [cx+r*Math.cos(rad),cy+r*Math.sin(rad)];};
+  const arc=(a0,a1)=>{const[x0,y0]=pol(a0),[x1,y1]=pol(a1);const large=(a1-a0)>180?1:0;
+    return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`;};
+  document.getElementById('gtrack').setAttribute('d',arc(start,start+sweep));
+  document.getElementById('gfill').setAttribute('d',arc(start,start+sweep*0.46));
+
+  // funnel bars fill + hover title
+  document.querySelectorAll('#funnel .fill[data-w]').forEach(el=>{
+    const w=el.dataset.w; requestAnimationFrame(()=>{el.style.width=w+'%';});
+    el.parentElement.title=`점수 ${w} / 100`;
+  });
+  document.querySelector('#funnel .measuring').parentElement.title='측정 전 — 재방문을 재는 장치가 아직 없습니다';
+</script>
