@@ -144,7 +144,6 @@
   .board{border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .board-top{display:flex;justify-content:space-between;align-items:center;
     background:var(--brand);color:#fff;padding:12px 16px}
-  :root[data-theme="dark"] .board-top,@media(prefers-color-scheme:dark){}
   .board-top .t{font-weight:800;font-size:13.5px}
   .board-top .wk{font-size:11px;font-weight:700;opacity:.85}
   .lead{display:flex;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--line)}
@@ -201,8 +200,10 @@
         <div>
           <div class="gauge">
             <svg viewBox="0 0 150 118" width="150" height="118" aria-hidden="true">
-              <path id="gtrack" fill="none" stroke="var(--panel)" stroke-width="13" stroke-linecap="round"/>
-              <path id="gfill" fill="none" stroke="var(--good)" stroke-width="13" stroke-linecap="round"/>
+              <path fill="none" stroke="var(--panel)" stroke-width="13" stroke-linecap="round"
+                d="M 29.97 108 A 52 52 0 1 1 120.03 108"/>
+              <path fill="none" stroke="var(--good)" stroke-width="13" stroke-linecap="round"
+                d="M 29.97 108 A 52 52 0 0 1 66.33 30.73"/>
             </svg>
             <div class="val"><span class="big num">46</span><span class="den num">/ 100</span></div>
           </div>
@@ -225,22 +226,22 @@
       <div class="funnel" id="funnel">
         <div class="stage">
           <span class="lab">발견</span>
-          <div class="track"><div class="fill" data-w="57"></div></div>
+          <div class="track" title="점수 57 / 100"><div class="fill" style="width:57%"></div></div>
           <span class="tag"><span class="num">57</span><span class="st">보통</span></span>
         </div>
         <div class="stage">
           <span class="lab">전환</span>
-          <div class="track"><div class="fill" data-w="65"></div></div>
+          <div class="track" title="점수 65 / 100"><div class="fill" style="width:65%"></div></div>
           <span class="tag"><span class="num">65</span><span class="st">양호</span></span>
         </div>
         <div class="stage">
           <span class="lab">재방문</span>
-          <div class="track"><div class="fill measuring"></div><span class="measuring-lab">측정 전 — 장치 없음</span></div>
+          <div class="track" title="측정 전 — 재방문을 재는 장치가 아직 없습니다"><div class="fill measuring"></div><span class="measuring-lab">측정 전 — 장치 없음</span></div>
           <span class="chip bot">병목</span>
         </div>
         <div class="stage">
           <span class="lab">추천</span>
-          <div class="track"><div class="fill" data-w="68"></div></div>
+          <div class="track" title="점수 68 / 100"><div class="fill" style="width:68%"></div></div>
           <span class="tag"><span class="num">68</span><span class="st">강함</span></span>
         </div>
       </div>
@@ -325,26 +326,10 @@
 </div>
 
 <script>
-  // theme toggle
-  const tt=document.getElementById('tt');
-  tt.addEventListener('click',()=>{
+  // theme toggle (도표는 전부 정적 — JS 없이도 PDF/인쇄 완전 렌더)
+  document.getElementById('tt').addEventListener('click',()=>{
     const cur=document.documentElement.getAttribute('data-theme')
       || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
     document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');
   });
-
-  // gauge arc (240° sweep, start 150°)
-  const cx=75,cy=82,r=52,start=150,sweep=240;
-  const pol=(a)=>{const rad=(a)*Math.PI/180;return [cx+r*Math.cos(rad),cy+r*Math.sin(rad)];};
-  const arc=(a0,a1)=>{const[x0,y0]=pol(a0),[x1,y1]=pol(a1);const large=(a1-a0)>180?1:0;
-    return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`;};
-  document.getElementById('gtrack').setAttribute('d',arc(start,start+sweep));
-  document.getElementById('gfill').setAttribute('d',arc(start,start+sweep*0.46));
-
-  // funnel bars fill + hover title
-  document.querySelectorAll('#funnel .fill[data-w]').forEach(el=>{
-    const w=el.dataset.w; requestAnimationFrame(()=>{el.style.width=w+'%';});
-    el.parentElement.title=`점수 ${w} / 100`;
-  });
-  document.querySelector('#funnel .measuring').parentElement.title='측정 전 — 재방문을 재는 장치가 아직 없습니다';
 </script>
