@@ -6,24 +6,37 @@ export async function callClaude(opts: {
   model?: string;
   maxTokens?: number;
 }): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: opts.model ?? process.env.REVIEW_MODEL ?? "claude-haiku-4-5-20251001",
-      max_tokens: opts.maxTokens ?? 4000,
-      temperature: 0,
-      system: opts.system,
-      messages: [{ role: "user", content: opts.prompt }],
-    }),
-  });
-  if (!res.ok) throw new Error(`Claude API ${res.status}: ${await res.text()}`);
-  const data = (await res.json()) as { content: { type: string; text?: string }[] };
-  return data.content.filter((c) => c.type === "text").map((c) => c.text).join("");
+  const body = {
+    model: opts.model ?? process.env.REVIEW_MODEL ?? "claude-haiku-4-5-20251001",
+    max_tokens: opts.maxTokens ?? 4000,
+    temperature: 0 as number | undefined, // 결정성 (지원 모델에서만)
+    system: opts.system,
+    messages: [{ role: "user", content: opts.prompt }],
+  };
+
+  // 최신 세대 모델은 temperature가 폐기됨 → 해당 400이면 빼고 1회 재시도
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { content: { type: string; text?: string }[] };
+      return data.content.filter((c) => c.type === "text").map((c) => c.text).join("");
+    }
+    const errText = await res.text();
+    if (res.status === 400 && errText.includes("temperature") && body.temperature !== undefined) {
+      delete body.temperature;
+      continue;
+    }
+    throw new Error(`Claude API ${res.status}: ${errText}`);
+  }
+  throw new Error("Claude API: 재시도 초과");
 }
 
 /** JSON 강제 출력 + 검증 + 재시도 1회 패턴 */
