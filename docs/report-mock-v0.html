@@ -78,6 +78,16 @@
     border-left:3px solid var(--brand);border-radius:8px;padding:12px 14px;font-size:13.5px}
   .wig-goal .k{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:var(--brand);text-transform:uppercase;display:block;margin-bottom:4px}
   .wig-goal b{font-weight:800}
+  .basis{font-size:11px;color:var(--muted);font-weight:600;text-align:center;margin-top:8px;line-height:1.45}
+
+  /* 오늘 할 일 — 리포트에서 가장 먼저 실행으로 이어지는 한 칸 */
+  .today{margin-top:16px;display:flex;align-items:center;gap:13px;
+    background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 32%,transparent);
+    border-radius:10px;padding:13px 16px}
+  .today .k{font-size:10.5px;font-weight:800;letter-spacing:.12em;color:var(--warn);
+    text-transform:uppercase;white-space:nowrap}
+  .today .t{font-size:14px;font-weight:800;line-height:1.45}
+  .today .t small{display:block;font-size:11.5px;font-weight:600;color:var(--ink-2);margin-top:2px}
 
   /* ── funnel ── */
   .funnel{display:flex;flex-direction:column;gap:10px}
@@ -207,6 +217,7 @@
             </svg>
             <div class="val"><span class="big num">46</span><span class="den num">/ 100</span></div>
           </div>
+          <p class="basis">플레이스·블로그·검색 노출 실측<br>+ 사장님 설문으로 계산</p>
         </div>
         <div>
           <div class="wig-lead">⚠ 가장 위험한 구멍</div>
@@ -216,6 +227,11 @@
             재방문을 <b>“측정 안 됨”</b>에서 <b>“측정 살아있음 + 첫 재방문 확인”</b>으로.
           </div>
         </div>
+      </div>
+      <div class="today">
+        <span class="k">오늘 할 일 · 1개</span>
+        <p class="t" style="margin:0">시술 끝나고 “4주 뒤가 딱 좋아요, 그때 또 오세요” 한마디.
+          <small>돈 0원 · 10초 · 오늘 손님부터 바로 — 나머지는 아래 점수판이 챙깁니다.</small></p>
       </div>
     </section>
 
@@ -246,7 +262,7 @@
         </div>
       </div>
       <p class="sec-cap" style="margin-top:12px;font-weight:600;color:var(--muted)">
-        추천(68)은 이미 강합니다. 그런데 그 사이 <b style="color:var(--warn)">재방문은 재는 장치조차 없어요</b> — 강한 추천이 새 나가는 지점입니다.</p>
+        추천(68)은 이미 강합니다. 그런데 그 사이 <b style="color:var(--warn)">재방문은 재는 장치조차 없어요</b> — 가게 탓도, 저희가 몰라서도 아닙니다. 장치가 없으면 아무도 못 봅니다. <b>그 장치는 이번 주 점수판 1번에서 타개가 답니다.</b></p>
 
       <div class="surf-wrap">
         <div class="surf-head">발견은 이제 세 곳에서 일어납니다 <small>— 검색이 SEO 하나가 아니게 됐어요</small></div>
