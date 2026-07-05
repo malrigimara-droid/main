@@ -1,7 +1,8 @@
 // ─── llmProbe 첫 스냅샷 러너 ──────────────────────────────────
 // 실행:
-//   npx tsx src/probeDemo.ts          # ANTHROPIC_API_KEY 있으면 claude 실측, 없으면 stub 드라이런
-//   npx tsx src/probeDemo.ts --stub   # 강제 드라이런 (파이프라인 검증)
+//   npx tsx src/probeDemo.ts             # 키 있는 엔진 전부, 두 가게 모두
+//   npx tsx src/probeDemo.ts gogowaxing  # 특정 가게만 (storeId 일부 일치)
+//   npx tsx src/probeDemo.ts --stub      # 강제 드라이런 (파이프라인 검증)
 //
 // 대상 2곳: 고고왁싱(방배, 근접형) / 모먼츠비올라(이매동, destination형).
 // 경쟁 엔티티는 정밀진단·점유맵에서 확인된 실명 사용.
@@ -65,7 +66,11 @@ async function main() {
     console.log(`▶ 드라이런 모드 (stub 엔진)${hasKey ? "" : " — ANTHROPIC_API_KEY 없음"}. 숫자는 검증용이며 실측이 아님.`);
   }
 
-  for (const c of CASES) {
+  const storeFilter = process.argv.slice(2).find((a) => !a.startsWith("-"));
+  const cases = storeFilter ? CASES.filter((c) => c.storeId.includes(storeFilter)) : CASES;
+  if (cases.length === 0) throw new Error(`해당 가게 없음: ${storeFilter} (가능: ${CASES.map((c) => c.storeId).join(", ")})`);
+
+  for (const c of cases) {
     const engines = real
       ? realEngines
       : [stubEngine(c.entities.filter((e) => !e.isMine).map((e) => e.name))];
