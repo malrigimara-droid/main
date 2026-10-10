@@ -49,21 +49,21 @@ function printSnapshot(s: ProbeSnapshot) {
 
 async function main() {
   const forceStub = process.argv.includes("--stub");
-  const hasKey = !!process.env.ANTHROPIC_API_KEY;
-  const real = hasKey && !forceStub;
 
   // 키가 있는 엔진만 자동 편성 — 키 추가 = 열 추가
   const realEngines = [
-    claudeEngine(), claudeSearchEngine(),       // 무검색 vs 검색 — 대비가 곧 발견
+    ...(process.env.ANTHROPIC_API_KEY ? [claudeEngine(), claudeSearchEngine()] : []), // 무검색 vs 검색 — 대비가 곧 발견
     ...(process.env.OPENAI_API_KEY ? [chatgptEngine()] : []),
     ...(process.env.GEMINI_API_KEY ? [geminiEngine()] : []),
   ];
+  const real = realEngines.length > 0 && !forceStub;
   if (real) {
     console.log(`▶ 실측 모드 — 엔진 ${realEngines.length}개: ${realEngines.map((e) => e.id).join(", ")}`);
+    if (!process.env.ANTHROPIC_API_KEY) console.log("  (ANTHROPIC_API_KEY 없음 — claude/claude_search 열 제외)");
     if (!process.env.OPENAI_API_KEY) console.log("  (OPENAI_API_KEY 없음 — chatgpt 열 제외)");
     if (!process.env.GEMINI_API_KEY) console.log("  (GEMINI_API_KEY 없음 — gemini 열 제외)");
   } else {
-    console.log(`▶ 드라이런 모드 (stub 엔진)${hasKey ? "" : " — ANTHROPIC_API_KEY 없음"}. 숫자는 검증용이며 실측이 아님.`);
+    console.log(`▶ 드라이런 모드 (stub 엔진)${realEngines.length > 0 ? "" : " — API 키 없음"}. 숫자는 검증용이며 실측이 아님.`);
   }
 
   const storeFilter = process.argv.slice(2).find((a) => !a.startsWith("-"));
